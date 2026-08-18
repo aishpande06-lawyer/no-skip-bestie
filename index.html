@@ -1003,6 +1003,7 @@ let state = {
   collapsed:{warmup:true, mobility:true, main:false, primary:false, prime:true, pump:true, cardio:true, cooldown:true},
   rest:{active:false, seconds:0, total:0, handle:null},
   roundTimer:{active:false, seconds:0, phase:'on', currentIndex:0, currentRound:1, roundsCompleted:0, intervalsCompleted:0, handle:null},
+  historyCache:[],
   autosaveHandle:null,
 };
 
@@ -1129,21 +1130,34 @@ function selectSplit(key){
   refreshFocusReadout();
 }
 
+function getSplitPattern(splitDef){
+  return splitDef.pattern || [...splitDef.days, 'rest'];
+}
+function getRotationAnchor(pattern){
+  const hist = state.historyCache || [];
+  const matches = hist
+    .filter(s => s.split === state.split && pattern.includes(s.day))
+    .sort((a,b) => b.date.localeCompare(a.date));
+  if(matches.length){
+    const last = matches[0];
+    return { date: new Date(last.date+'T00:00:00'), index: pattern.indexOf(last.day) };
+  }
+  return { date: new Date(localISODate(new Date())+'T00:00:00'), index: 0 };
+}
 function computeWeekPlan(){
   state.weekPlan = {};
   if(!state.split) return;
   const splitDef = SPLITS[state.split];
-  const today = new Date();
+  const pattern = getSplitPattern(splitDef);
   const posMod = (n, m) => ((n % m) + m) % m;
+  const anchor = getRotationAnchor(pattern);
+  const today = new Date();
   for(let i=-7;i<7;i++){
     const d = new Date(today); d.setDate(today.getDate()+i);
     const iso = localISODate(d);
-    if(splitDef.pattern){
-      state.weekPlan[iso] = splitDef.pattern[posMod(i, splitDef.pattern.length)];
-    } else {
-      const days = splitDef.days;
-      state.weekPlan[iso] = (posMod(i, 7) === 6) ? 'rest' : days[posMod(i, days.length)];
-    }
+    const diffDays = Math.round((d - anchor.date) / 86400000);
+    const idx = posMod(anchor.index + diffDays, pattern.length);
+    state.weekPlan[iso] = pattern[idx];
   }
 }
 
@@ -2158,6 +2172,7 @@ document.getElementById('finishBtn').onclick = async ()=>{
   const hist = await loadHistory();
   hist.unshift(s);
   await saveHistory(hist);
+  state.historyCache = hist;
 
   await refreshStreak(hist);
   await renderHistory(hist);
@@ -2170,6 +2185,7 @@ document.getElementById('finishBtn').onclick = async ()=>{
   document.getElementById('setupCard').style.display = 'block';
   document.getElementById('sessionArea').style.display = 'none';
   document.getElementById('finishBar').style.display = 'none';
+  if(state.split){ computeWeekPlan(); renderDateStrip(); refreshFocusReadout(); }
 };
 
 function showToast(msg){
@@ -2222,6 +2238,7 @@ document.getElementById('resetDataBtn').onclick = async ()=>{
     }catch(e){}
     settingsOverlay.classList.remove('show');
     const hist = await loadHistory();
+    state.historyCache = hist;
     await refreshStreak(hist);
     await renderHistory(hist);
     showToast('All data reset');
@@ -2262,6 +2279,7 @@ document.getElementById('importFileInput').onchange = (e)=>{
       Object.keys(backup.bests).forEach(k=>{ localStorage.setItem(k, backup.bests[k]); });
       settingsOverlay.classList.remove('show');
       const hist = await loadHistory();
+      state.historyCache = hist;
       await refreshStreak(hist);
       await renderHistory(hist);
       showToast('Backup restored ✅');
@@ -2325,6 +2343,7 @@ document.querySelectorAll('.tab').forEach(tab=>{
   seedDefaultDataIfEmpty();
   updateTimerDisplay();
   const hist = await loadHistory();
+  state.historyCache = hist;
   await refreshStreak(hist);
   try{
     if(navigator.storage && navigator.storage.persist){ await navigator.storage.persist(); }
