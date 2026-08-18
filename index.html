@@ -129,7 +129,12 @@
   .round-title{font-size:19px;}
   .round-sub{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em;}
   .round-list{margin:14px 0; display:flex; flex-direction:column; gap:8px;}
-  .round-list-item{display:flex; justify-content:space-between; align-items:center; background:var(--panel-2); border-radius:10px; padding:9px 12px; font-size:13px;}
+  .round-list-item-wrap{}
+  .round-list-item{display:flex; justify-content:space-between; align-items:center; background:var(--panel-2); border-radius:10px; padding:9px 12px; font-size:13px; cursor:pointer;}
+  .rli-caret{color:var(--muted); font-size:11px; margin-left:6px; transition:transform .2s;}
+  .round-list-item.active .rli-caret{color:var(--pink-ink);}
+  .rli-expand{display:none; background:var(--panel-2); border-radius:0 0 10px 10px; padding:0 12px 12px; margin-top:-8px;}
+  .rli-expand.open{display:block;}
   .round-list-item.active{background:var(--pink); color:var(--pink-ink); font-weight:700;}
   .round-list-item .rli-reps{font-family:'JetBrains Mono'; font-size:12px; color:var(--muted);}
   .round-list-item.active .rli-reps{color:var(--pink-ink);}
@@ -209,6 +214,9 @@
     width:46px; height:46px; flex:none; border-radius:12px; background:var(--panel-2);
     display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:22px;
   }
+  .thumb svg{width:30px; height:auto;}
+  .rli-thumb{width:22px; height:22px; flex:none; display:flex; align-items:center; justify-content:center; margin-left:6px;}
+  .rli-thumb svg{width:18px; height:auto;}
   .ex-name{font-size:16px; font-weight:600;}
   .ex-meta{font-size:11px; color:var(--muted); margin-top:3px;}
 
@@ -241,6 +249,10 @@
     display:inline-block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;
     background:var(--pink-dim); color:var(--pink); border-radius:5px; padding:2px 6px; margin-right:8px;
   }
+  .intensity-label{font-weight:700;}
+  .intensity-easier{color:var(--mint);}
+  .intensity-harder{color:var(--coral);}
+  .intensity-same{color:var(--muted);}
   .settings-row:last-of-type{border-bottom:none;}
   .settings-label{font-size:13px; color:var(--muted);}
   .settings-val{font-family:'JetBrains Mono'; font-size:14px; font-weight:700;}
@@ -276,10 +288,10 @@
   .ex-best{font-family:'JetBrains Mono'; font-size:11px; color:var(--pink);}
   .ex-side-btns{display:flex; gap:6px;}
   .btn-swap, .btn-delete{
-    width:30px; height:30px; border-radius:9px; background:var(--panel-2); border:1px solid var(--line);
-    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px;
+    width:28px; height:28px; border-radius:8px; background:var(--panel-2); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px;
   }
-  .btn-delete{border-color:var(--coral); color:var(--coral);}
+  .btn-delete{color:var(--coral);}
   .rli-delete{color:var(--muted); font-size:13px; cursor:pointer; padding:2px 4px; margin-left:6px;}
   .rli-swap{color:var(--muted); font-size:13px; cursor:pointer; padding:2px 4px; margin-left:6px;}
   .round-list-item.active .rli-delete, .round-list-item.active .rli-swap{color:var(--pink-ink);}
@@ -298,6 +310,25 @@
 
   /* demo animation */
   .demo-box{background:var(--panel-2); border-radius:10px; margin:14px 0 10px; padding:12px;}
+  .muscle-map{
+    display:flex; align-items:center; gap:12px; background:var(--panel-2); border-radius:10px;
+    padding:10px 14px; margin-top:14px;
+  }
+  .muscle-map svg{width:44px; height:auto; flex:none;}
+  .muscle-map-label{font-size:13px; font-weight:700; color:var(--pink);}
+  .ex-timer{
+    display:flex; align-items:center; justify-content:space-between; background:var(--panel-2);
+    border-radius:10px; padding:10px 14px; margin-top:10px;
+  }
+  .ex-timer-num{font-family:'JetBrains Mono'; font-size:20px; color:var(--chalk);}
+  .ex-timer-label{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-top:1px;}
+  .ex-timer-btns{display:flex; gap:6px;}
+  .ex-timer-btn{
+    background:var(--pink); color:var(--pink-ink); border:none; border-radius:8px; padding:8px 14px;
+    font-weight:700; font-size:11px; cursor:pointer; font-family:'Fredoka';
+  }
+  .ex-timer-btn.ghost{background:transparent; border:1px solid var(--line); color:var(--muted);}
+  .ex-timer-btn.stop{background:var(--coral); color:#2A0E0E;}
   .video-link{
     display:flex; align-items:center; gap:12px; text-decoration:none; background:var(--panel);
     border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:10px; cursor:pointer;
@@ -397,6 +428,7 @@
     <div class="brand display"><span class="dot"></span>No Skip Bestie</div>
     <div class="header-actions">
       <div class="streak-pill" id="streakPill">🔥 0</div>
+      <div class="gear-btn" id="stopwatchBtn" title="Stopwatch">⏱️</div>
       <div class="gear-btn" id="gearBtn">⚙️</div>
     </div>
   </div>
@@ -519,6 +551,26 @@
   </div>
 </div>
 
+<!-- STOPWATCH -->
+<div class="rest-overlay" id="stopwatchOverlay">
+  <div class="rest-top">
+    <div class="rest-back" id="stopwatchClose">‹</div>
+    <div class="rest-title display">Stopwatch</div>
+  </div>
+  <div class="rest-mid">
+    <div class="rest-ring-wrap">
+      <svg viewBox="0 0 100 100" class="ring-a"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--pink)" stroke-width="2.5" stroke-dasharray="180 100"/></svg>
+      <svg viewBox="0 0 100 100" class="ring-b"><circle cx="50" cy="50" r="36" fill="none" stroke="var(--mint)" stroke-width="2.5" stroke-dasharray="150 120"/></svg>
+      <svg viewBox="0 0 100 100" class="ring-c"><circle cx="50" cy="50" r="30" fill="none" stroke="var(--purple)" stroke-width="2.5" stroke-dasharray="120 100"/></svg>
+      <div class="rest-num mono" id="stopwatchNum">00:00</div>
+    </div>
+    <div class="rest-actions" style="flex-direction:row; gap:10px;">
+      <div class="skip-btn" id="stopwatchReset">Reset</div>
+      <button class="timer-btn" id="stopwatchToggle" style="margin:0;">Start</button>
+    </div>
+  </div>
+</div>
+
 <!-- SETTINGS -->
 <!-- SWAP PICKER -->
 <div class="settings-overlay" id="swapOverlay">
@@ -575,6 +627,8 @@ const MUSCLES = {
     {name:"Push-ups", pattern:"pushup", sets:3, reps:"AMRAP", sub:"flat", tier:"pump"},
     {name:"Machine Chest Press", pattern:"press", sets:3, reps:"10-12", sub:"flat", tier:"prime"},
     {name:"Smith Machine Bench Press", pattern:"press", sets:4, reps:"6-8", sub:"flat", tier:"main"},
+    {name:"Weighted Dips", pattern:"dip", sets:4, reps:"6-8", sub:"flat", tier:"main"},
+    {name:"Barbell Floor Press", pattern:"press", sets:4, reps:"6-8", sub:"flat", tier:"main"},
     {name:"Decline Dumbbell Press", pattern:"press", sets:3, reps:"8-10", sub:"flat", tier:"prime"},
     {name:"Landmine Press", pattern:"incline", sets:3, reps:"10-12", sub:"upper", tier:"prime"},
     {name:"Dumbbell Pullover", pattern:"fly", sets:3, reps:"10-12", sub:"flat", tier:"prime"},
@@ -582,6 +636,9 @@ const MUSCLES = {
     {name:"High-to-Low Cable Crossover", pattern:"fly", sets:3, reps:"12-15", sub:"flat", tier:"pump"},
     {name:"Decline Push-ups", pattern:"pushup", sets:3, reps:"AMRAP", sub:"upper", tier:"pump"},
     {name:"Svend Press", pattern:"press", sets:3, reps:"15-20", sub:"flat", tier:"pump"},
+    {name:"Isometric Bench Press Hold", pattern:"press", sets:3, reps:"15-20s hold", sub:"flat", tier:"pump", isometric:true},
+    {name:"Isometric Push-up Hold", pattern:"pushup", sets:3, reps:"15-20s hold", sub:"flat", tier:"pump", isometric:true},
+    {name:"Chest Fly Squeeze Hold", pattern:"fly", sets:3, reps:"15-20s hold", sub:"flat", tier:"pump", isometric:true},
   ]},
   back:{label:"Back", exercises:[
     {name:"Deadlift", pattern:"hinge", sets:4, reps:"5", sub:"thickness", tier:"main"},
@@ -590,6 +647,9 @@ const MUSCLES = {
     {name:"Barbell Row", pattern:"pull", sets:4, reps:"8-10", sub:"thickness", tier:"main"},
     {name:"Pendlay Row", pattern:"pull", sets:4, reps:"6-8", sub:"thickness", tier:"main"},
     {name:"Rack Pull", pattern:"hinge", sets:3, reps:"6-8", sub:"thickness", tier:"main"},
+    {name:"Weighted Pull-ups", pattern:"pullup", sets:4, reps:"5-6", sub:"width", tier:"main"},
+    {name:"Snatch-Grip Deadlift", pattern:"hinge", sets:3, reps:"5-6", sub:"thickness", tier:"main"},
+    {name:"Barbell Good Morning", pattern:"hinge", sets:3, reps:"8-10", sub:"thickness", tier:"main"},
     {name:"Lat Pulldown", pattern:"pull", sets:3, reps:"10-12", sub:"width", tier:"prime"},
     {name:"Wide-Grip Lat Pulldown", pattern:"pull", sets:3, reps:"10-12", sub:"width", tier:"prime"},
     {name:"Neutral-Grip Pulldown", pattern:"pull", sets:3, reps:"10-12", sub:"width", tier:"prime"},
@@ -604,12 +664,19 @@ const MUSCLES = {
     {name:"Cable Pullover", pattern:"pull", sets:3, reps:"12-15", sub:"width", tier:"pump"},
     {name:"Inverted Row", pattern:"pull", sets:3, reps:"12-15", sub:"thickness", tier:"pump"},
     {name:"Face Pull", pattern:"facepull", sets:3, reps:"12-15", sub:"thickness", tier:"pump"},
+    {name:"Isometric Row Hold", pattern:"pull", sets:3, reps:"20-30s hold", sub:"thickness", tier:"pump", isometric:true},
+    {name:"Superman Hold", pattern:"hinge", sets:3, reps:"20-30s hold", sub:"thickness", tier:"pump", isometric:true},
+    {name:"Dead Hang", pattern:"pullup", sets:3, reps:"20-30s hold", sub:"width", tier:"prime", isometric:true},
+    {name:"Chin-Up Top Hold", pattern:"pullup", sets:3, reps:"10-15s hold", sub:"width", tier:"prime", isometric:true},
+    {name:"Scapular Retraction Hold", pattern:"pull", sets:3, reps:"15-20s hold", sub:"thickness", tier:"pump", isometric:true},
   ]},
   shoulders:{label:"Shoulders", exercises:[
     {name:"Overhead Press", pattern:"overhead", sets:4, reps:"6-8", sub:"front", tier:"main"},
     {name:"Push Press", pattern:"overhead", sets:4, reps:"5-6", sub:"front", tier:"main"},
     {name:"DB Push Press", pattern:"overhead", sets:4, reps:"5-6", sub:"front", tier:"main"},
     {name:"Seated Barbell Press", pattern:"overhead", sets:4, reps:"6-8", sub:"front", tier:"main"},
+    {name:"Clean and Press", pattern:"overhead", sets:4, reps:"5-6", sub:"front", tier:"main"},
+    {name:"Behind-the-Neck Press", pattern:"overhead", sets:3, reps:"6-8", sub:"front", tier:"main"},
     {name:"Dumbbell Shoulder Press", pattern:"overhead", sets:3, reps:"8-10", sub:"front", tier:"prime"},
     {name:"Single-Arm DB Press", pattern:"overhead", sets:3, reps:"10/side", sub:"front", tier:"prime"},
     {name:"Arnold Press", pattern:"overhead", sets:3, reps:"10-12", sub:"front", tier:"prime"},
@@ -625,9 +692,15 @@ const MUSCLES = {
     {name:"Reverse Pec Deck", pattern:"fly", sets:3, reps:"12-15", sub:"rear", tier:"pump"},
     {name:"Cable Y-Raise", pattern:"raise", sets:3, reps:"12-15", sub:"rear", tier:"pump"},
     {name:"Shrugs", pattern:"shrug", sets:3, reps:"12-15", sub:"rear", tier:"pump"},
+    {name:"Overhead Hold", pattern:"overhead", sets:3, reps:"20-30s hold", sub:"front", tier:"pump", isometric:true},
+    {name:"Waiter's Hold", pattern:"overhead", sets:3, reps:"20-30s/side hold", sub:"front", tier:"pump", isometric:true},
+    {name:"Lateral Raise Hold", pattern:"raise", sets:3, reps:"15-20s hold", sub:"front", tier:"pump", isometric:true},
+    {name:"Front Raise Hold", pattern:"raise", sets:3, reps:"15-20s hold", sub:"front", tier:"pump", isometric:true},
+    {name:"Wall Handstand Hold", pattern:"overhead", sets:3, reps:"10-20s hold", sub:"front", tier:"prime", isometric:true},
   ]},
   legs:{label:"Legs", exercises:[
     {name:"Barbell Squat", pattern:"squat", sets:4, reps:"6-8", sub:"quad", tier:"main"},
+    {name:"Sumo Squat", pattern:"squat", sets:4, reps:"8-10", sub:"quad", tier:"main"},
     {name:"Front Squat", pattern:"squat", sets:3, reps:"6-8", sub:"quad", tier:"main"},
     {name:"Hack Squat", pattern:"squat", sets:3, reps:"8-10", sub:"quad", tier:"main"},
     {name:"Romanian Deadlift", pattern:"hinge", sets:3, reps:"8-10", sub:"posterior", tier:"main"},
@@ -635,6 +708,11 @@ const MUSCLES = {
     {name:"Sumo Deadlift", pattern:"hinge", sets:3, reps:"5-6", sub:"posterior", tier:"main"},
     {name:"Trap Bar Deadlift", pattern:"hinge", sets:3, reps:"6-8", sub:"posterior", tier:"main"},
     {name:"Hip Thrust", pattern:"hipthrust", sets:3, reps:"10-12", sub:"posterior", tier:"main"},
+    {name:"Zercher Squat", pattern:"squat", sets:4, reps:"6-8", sub:"quad", tier:"main"},
+    {name:"Pistol Squat", pattern:"squat", sets:3, reps:"6-8/leg", sub:"quad", tier:"main"},
+    {name:"Barbell Walking Lunge", pattern:"lunge", sets:3, reps:"10/leg", sub:"quad", tier:"main"},
+    {name:"Deficit Deadlift", pattern:"hinge", sets:3, reps:"5-6", sub:"posterior", tier:"main"},
+    {name:"Power Clean", pattern:"hinge", sets:4, reps:"3-5", sub:"quad", tier:"main"},
     {name:"Goblet Squat", pattern:"squat", sets:3, reps:"10-12", sub:"quad", tier:"prime"},
     {name:"Leg Press", pattern:"legpress", sets:3, reps:"10-12", sub:"quad", tier:"prime"},
     {name:"Walking Lunge", pattern:"lunge", sets:3, reps:"10/leg", sub:"quad", tier:"prime"},
@@ -649,11 +727,24 @@ const MUSCLES = {
     {name:"Glute Bridge", pattern:"hipthrust", sets:3, reps:"12-15", sub:"posterior", tier:"pump"},
     {name:"Calf Raise", pattern:"calf", sets:4, reps:"15-20", tier:"pump"},
     {name:"Seated Calf Raise", pattern:"calf", sets:4, reps:"15-20", tier:"pump"},
+    {name:"Inner Thigh Machine (Adductor)", pattern:"legext", sets:3, reps:"12-15", sub:"quad", tier:"prime"},
+    {name:"Outer Thigh Machine (Abductor)", pattern:"legcurl", sets:3, reps:"12-15", sub:"posterior", tier:"prime"},
+    {name:"Wall Sit", pattern:"squat", sets:3, reps:"30-45s hold", sub:"quad", tier:"pump", isometric:true},
+    {name:"Sumo Squat Hold", pattern:"squat", sets:3, reps:"30-45s hold", sub:"quad", tier:"pump", isometric:true},
+    {name:"Static Lunge Hold", pattern:"lunge", sets:3, reps:"20-30s/side hold", sub:"posterior", tier:"pump", isometric:true},
+    {name:"Glute Bridge Hold", pattern:"hipthrust", sets:3, reps:"30s hold", sub:"posterior", tier:"pump", isometric:true},
+    {name:"Single-Leg Wall Sit", pattern:"squat", sets:3, reps:"15-20s/side hold", sub:"quad", tier:"prime", isometric:true},
+    {name:"Squat Bottom Hold", pattern:"squat", sets:3, reps:"20-30s hold", sub:"quad", tier:"prime", isometric:true},
+    {name:"Bulgarian Split Squat Bottom Hold", pattern:"lunge", sets:3, reps:"15-20s/side hold", sub:"posterior", tier:"prime", isometric:true},
+    {name:"Copenhagen Plank", pattern:"core", sets:3, reps:"20-30s/side hold", sub:"quad", tier:"prime", isometric:true},
+    {name:"Deadlift Lockout Hold", pattern:"hinge", sets:3, reps:"10-15s hold", sub:"posterior", tier:"pump", isometric:true},
+    {name:"Calf Raise Top Hold", pattern:"calf", sets:3, reps:"20-30s hold", tier:"pump", isometric:true},
   ]},
   arms:{label:"Arms", exercises:[
     {name:"Barbell Curl", pattern:"curl", sets:3, reps:"10-12", sub:"biceps", tier:"main"},
     {name:"EZ-Bar Curl", pattern:"curl", sets:3, reps:"10-12", sub:"biceps", tier:"main"},
     {name:"Close-Grip Bench Press", pattern:"press", sets:3, reps:"8-10", sub:"triceps", tier:"main"},
+    {name:"Weighted Chin-ups", pattern:"pullup", sets:3, reps:"6-8", sub:"biceps", tier:"main"},
     {name:"Hammer Curl", pattern:"curl", sets:3, reps:"10-12", sub:"biceps", tier:"prime"},
     {name:"Incline Dumbbell Curl", pattern:"curl", sets:3, reps:"10-12", sub:"biceps", tier:"prime"},
     {name:"Cable Curl", pattern:"curl", sets:3, reps:"10-12", sub:"biceps", tier:"prime"},
@@ -666,23 +757,35 @@ const MUSCLES = {
     {name:"Spider Curl", pattern:"curl", sets:3, reps:"12-15", sub:"biceps", tier:"pump"},
     {name:"Overhead Tricep Extension", pattern:"triceps", sets:3, reps:"10-12", sub:"triceps", tier:"pump"},
     {name:"Single-Arm Tricep Kickback", pattern:"triceps", sets:3, reps:"12-15/side", sub:"triceps", tier:"pump"},
+    {name:"Isometric Bicep Hold", pattern:"curl", sets:3, reps:"20s hold", sub:"biceps", tier:"pump", isometric:true},
+    {name:"Isometric Tricep Hold", pattern:"triceps", sets:3, reps:"20s hold", sub:"triceps", tier:"pump", isometric:true},
+    {name:"Dip Bottom Hold", pattern:"dip", sets:3, reps:"15-20s hold", sub:"triceps", tier:"prime", isometric:true},
+    {name:"Chin-Up Bottom Hold", pattern:"pullup", sets:3, reps:"15-20s hold", sub:"biceps", tier:"prime", isometric:true},
   ]},
   core:{label:"Core", exercises:[
+    {name:"Turkish Get-Up", pattern:"core", sets:3, reps:"5/side", tier:"main"},
     {name:"Dragon Flag", pattern:"core", sets:3, reps:"6-8", tier:"prime"},
+    {name:"Landmine 180", pattern:"twist", sets:3, reps:"10/side", tier:"prime"},
     {name:"Toes to Bar", pattern:"legraise", sets:3, reps:"8-12", tier:"prime"},
     {name:"Hanging Leg Raise", pattern:"legraise", sets:3, reps:"10-15", tier:"prime"},
     {name:"Weighted Sit-up", pattern:"crunch", sets:3, reps:"10-12", tier:"prime"},
     {name:"Ab Wheel Rollout", pattern:"core", sets:3, reps:"8-10", tier:"prime"},
     {name:"Cable Crunch", pattern:"crunch", sets:3, reps:"12-15", tier:"pump"},
-    {name:"Plank", pattern:"core", sets:3, reps:"45s", tier:"pump"},
-    {name:"Side Plank", pattern:"core", sets:3, reps:"30s/side", tier:"pump"},
-    {name:"Hollow Body Hold", pattern:"core", sets:3, reps:"30s", tier:"pump"},
+    {name:"Plank", pattern:"core", sets:3, reps:"45s", tier:"pump", isometric:true},
+    {name:"Side Plank", pattern:"core", sets:3, reps:"30s/side", tier:"pump", isometric:true},
+    {name:"Hollow Body Hold", pattern:"core", sets:3, reps:"30s", tier:"pump", isometric:true},
     {name:"Dead Bug", pattern:"core", sets:3, reps:"12/side", tier:"pump"},
     {name:"Russian Twist", pattern:"twist", sets:3, reps:"20", tier:"pump"},
     {name:"Pallof Press", pattern:"twist", sets:3, reps:"12/side", tier:"pump"},
     {name:"Bicycle Crunch", pattern:"crunch", sets:3, reps:"20", tier:"pump"},
     {name:"V-Ups", pattern:"crunch", sets:3, reps:"15", tier:"pump"},
     {name:"Mountain Climbers", pattern:"core", sets:3, reps:"30s", tier:"pump"},
+    {name:"Weighted Plank", pattern:"core", sets:3, reps:"45-60s hold", tier:"prime", isometric:true},
+    {name:"L-Sit Hold", pattern:"core", sets:3, reps:"10-20s hold", tier:"prime", isometric:true},
+    {name:"Boat Pose Hold", pattern:"core", sets:3, reps:"20-30s hold", tier:"pump", isometric:true},
+    {name:"Reverse Plank Hold", pattern:"core", sets:3, reps:"20-30s hold", tier:"pump", isometric:true},
+    {name:"Bird Dog Hold", pattern:"core", sets:3, reps:"15-20s/side hold", tier:"pump", isometric:true},
+    {name:"Farmer's Carry Hold", pattern:"core", sets:3, reps:"20-30s hold", tier:"pump", isometric:true},
   ]},
 };
 
@@ -740,6 +843,7 @@ const WARMUP_SPECIFIC = {
     {name:"Lateral Band Walks", pattern:"lunge", duration:"10 steps/side"},
     {name:"World's Greatest Stretch", pattern:"twist", duration:"5/side"},
     {name:"Ankle Rocks", pattern:"calf", duration:"30s/side"},
+    {name:"Dead Bug", pattern:"core", duration:"10/side"},
   ],
   arms:[
     {name:"Arm Circles", pattern:"raise", duration:"30s each direction"},
@@ -816,6 +920,96 @@ const DEMO_STEPS = {
 };
 
 const CATEGORY_EMOJI = {warmup:'⚡', mobility:'🤸', main:'🏋️', primary:'🏋️', prime:'💪', pump:'🔥', cardio:'🏃', cooldown:'🧘'};
+
+// illustrative body-silhouette diagram: gray base figure + pink highlight over the specific region an exercise targets
+const BODY_BASE = '<circle cx="30" cy="9" r="7" fill="var(--line)"/><rect x="27" y="15" width="6" height="4" fill="var(--line)"/><polygon points="16,19 44,19 40,50 20,50" fill="var(--line)"/><polygon points="20,50 40,50 43,59 17,59" fill="var(--line)"/><circle cx="13" cy="20" r="4.5" fill="var(--line)"/><circle cx="47" cy="20" r="4.5" fill="var(--line)"/><polygon points="10,20 18,20 16,46 11,46" fill="var(--line)"/><polygon points="42,20 50,20 49,46 44,46" fill="var(--line)"/><polygon points="19,59 29,59 26,94 20,94" fill="var(--line)"/><polygon points="31,59 41,59 40,94 34,94" fill="var(--line)"/>';
+
+function muscleHighlightRegion(muscle, sub, pattern){
+  if(muscle === 'chest'){
+    return sub === 'upper'
+      ? '<polygon points="18,20 42,20 40,29 20,29" fill="var(--pink)"/>'
+      : '<polygon points="19,29 41,29 39,41 21,41" fill="var(--pink)"/>';
+  }
+  if(muscle === 'back'){
+    return sub === 'thickness'
+      ? '<polygon points="24,20 36,20 34,48 26,48" fill="var(--pink)"/>'
+      : '<polygon points="16,19 44,19 40,50 20,50" fill="var(--pink)"/><polygon points="20,50 40,50 43,59 17,59" fill="var(--pink)"/>';
+  }
+  if(muscle === 'shoulders'){
+    return sub === 'rear'
+      ? '<circle cx="13" cy="24" r="5" fill="var(--pink)"/><circle cx="47" cy="24" r="5" fill="var(--pink)"/>'
+      : '<circle cx="13" cy="20" r="5.5" fill="var(--pink)"/><circle cx="47" cy="20" r="5.5" fill="var(--pink)"/>';
+  }
+  if(muscle === 'legs'){
+    if(pattern === 'calf') return '<polygon points="21,80 27,80 26,94 20,94" fill="var(--pink)"/><polygon points="33,80 39,80 40,94 34,94" fill="var(--pink)"/>';
+    if(sub === 'quad') return '<polygon points="19,59 29,59 27,80 21,80" fill="var(--pink)"/><polygon points="31,59 41,59 39,80 33,80" fill="var(--pink)"/>';
+    return '<polygon points="20,50 40,50 43,59 17,59" fill="var(--pink)"/><polygon points="19,59 29,59 26,94 20,94" fill="var(--pink)"/><polygon points="31,59 41,59 40,94 34,94" fill="var(--pink)"/>';
+  }
+  if(muscle === 'arms') return '<polygon points="10,20 18,20 16,46 11,46" fill="var(--pink)"/><polygon points="42,20 50,20 49,46 44,46" fill="var(--pink)"/>';
+  if(muscle === 'core') return '<polygon points="21,38 39,38 38,50 22,50" fill="var(--pink)"/>';
+  if(muscle === 'full') return '<polygon points="16,19 44,19 40,50 20,50" fill="var(--pink)"/><polygon points="20,50 40,50 43,59 17,59" fill="var(--pink)"/><polygon points="10,20 18,20 16,46 11,46" fill="var(--pink)"/><polygon points="42,20 50,20 49,46 44,46" fill="var(--pink)"/><polygon points="19,59 29,59 26,94 20,94" fill="var(--pink)"/><polygon points="31,59 41,59 40,94 34,94" fill="var(--pink)"/><circle cx="13" cy="20" r="4.5" fill="var(--pink)"/><circle cx="47" cy="20" r="4.5" fill="var(--pink)"/>';
+  return '';
+}
+function muscleDiagramSVG(muscle, sub, pattern){
+  const region = muscleHighlightRegion(muscle, sub, pattern);
+  if(!region) return '';
+  return `<svg viewBox="0 0 60 98">${BODY_BASE}${region}</svg>`;
+}
+function getSpecificMuscleLabel(muscle, sub, pattern){
+  if(pattern === 'calf') return 'Calves';
+  const map = {
+    'chest:upper':'Upper Chest', 'chest:flat':'Chest',
+    'back:width':'Lats', 'back:thickness':'Mid-Back & Rhomboids',
+    'shoulders:front':'Front & Side Delts', 'shoulders:rear':'Rear Delts',
+    'legs:quad':'Quads', 'legs:posterior':'Glutes & Hamstrings',
+    'arms:biceps':'Biceps', 'arms:triceps':'Triceps',
+  };
+  const key = muscle+':'+(sub||'');
+  if(map[key]) return map[key];
+  const fallback = {chest:'Chest', back:'Back', shoulders:'Shoulders', legs:'Legs', arms:'Arms', core:'Abs & Core', full:'Full Body'};
+  return fallback[muscle] || '';
+}
+function muscleMapBlock(muscle, sub, pattern){
+  const svg = muscleDiagramSVG(muscle, sub, pattern);
+  if(!svg) return '';
+  const label = getSpecificMuscleLabel(muscle, sub, pattern);
+  return `<div class="muscle-map">${svg}<div class="muscle-map-label">${label}</div></div>`;
+}
+function exerciseTimerHTML(label){
+  return `<div class="ex-timer">
+    <div>
+      <div class="ex-timer-num mono">00:00</div>
+      <div class="ex-timer-label">${label}</div>
+    </div>
+    <div class="ex-timer-btns">
+      <div class="ex-timer-btn ghost ex-timer-reset">Reset</div>
+      <div class="ex-timer-btn ex-timer-toggle">Start</div>
+    </div>
+  </div>`;
+}
+function wireExerciseTimer(card){
+  card.querySelectorAll('.ex-timer').forEach(widget=>{
+    const numEl = widget.querySelector('.ex-timer-num');
+    const toggleBtn = widget.querySelector('.ex-timer-toggle');
+    const resetBtn = widget.querySelector('.ex-timer-reset');
+    let seconds = 0, running = false, handle = null;
+    function update(){ numEl.textContent = fmtMMSS(seconds); }
+    toggleBtn.onclick = (e)=>{
+      e.stopPropagation();
+      running = !running;
+      toggleBtn.textContent = running ? 'Pause' : 'Start';
+      toggleBtn.classList.toggle('stop', running);
+      if(running){ handle = setInterval(()=>{ seconds++; update(); }, 1000); }
+      else{ clearInterval(handle); }
+    };
+    resetBtn.onclick = (e)=>{
+      e.stopPropagation();
+      clearInterval(handle); running = false; seconds = 0;
+      toggleBtn.textContent = 'Start'; toggleBtn.classList.remove('stop');
+      update();
+    };
+  });
+}
 function youtubeSearchUrl(exerciseName){
   return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(exerciseName + ' proper form tutorial');
 }
@@ -942,11 +1136,13 @@ const ROUND_EXERCISES = {
     {name:"Beast Reach", pattern:"core", reps:"10", muscle:"core"},
     {name:"High Knees", pattern:"cardio", reps:"20"},
     {name:"Narrow Stance Squats", pattern:"squat", reps:"15", muscle:"legs", sub:"quad"},
+    {name:"Wall Sit", pattern:"squat", reps:"30-45s hold", muscle:"legs", sub:"quad", isometric:true},
+    {name:"Sumo Squat", pattern:"squat", reps:"12", muscle:"legs", sub:"quad"},
     {name:"Reverse Lunges", pattern:"lunge", reps:"12/leg", muscle:"legs", sub:"posterior"},
     {name:"Front Jump with Foot Fires", pattern:"cardio", reps:"10", muscle:"legs", sub:"quad"},
     {name:"Bridges", pattern:"hipthrust", reps:"15", muscle:"legs", sub:"posterior"},
     {name:"Side-to-Side Twist", pattern:"twist", reps:"20", muscle:"core"},
-    {name:"Low Plank Hold", pattern:"core", reps:"30s", muscle:"core"},
+    {name:"Low Plank Hold", pattern:"core", reps:"30s", muscle:"core", isometric:true},
     {name:"Hindu Push-ups", pattern:"pushup", reps:"10", muscle:"chest", sub:"flat"},
     {name:"Tricep Dips", pattern:"dip", reps:"12", muscle:"arms", sub:"triceps"},
     {name:"High Plank Renegade Rows", pattern:"pull", reps:"10/side", muscle:"back", sub:"thickness"},
@@ -954,13 +1150,24 @@ const ROUND_EXERCISES = {
     {name:"Leg Raises", pattern:"legraise", reps:"15", muscle:"core"},
     {name:"Butterfly Sit-ups", pattern:"crunch", reps:"15", muscle:"core"},
     {name:"Sit-ups", pattern:"crunch", reps:"15", muscle:"core"},
-    {name:"4-Point Hold", pattern:"core", reps:"30s", muscle:"core"},
+    {name:"4-Point Hold", pattern:"core", reps:"30s", muscle:"core", isometric:true},
     {name:"Burpees", pattern:"cardio", reps:"12", combo:true},
     {name:"Burpee to Push-up", pattern:"cardio", reps:"10", combo:true},
     {name:"Squat Thrusts", pattern:"cardio", reps:"15", combo:true},
     {name:"Jumping Lunge to Twist", pattern:"lunge", reps:"10/leg", combo:true},
     {name:"Bear Crawl to Push-up", pattern:"core", reps:"8", combo:true},
+    {name:"Isometric Push-up Hold", pattern:"pushup", reps:"15-20s hold", muscle:"chest", sub:"flat", isometric:true},
+    {name:"Superman Hold", pattern:"hinge", reps:"20-30s hold", muscle:"back", sub:"thickness", isometric:true},
+    {name:"Squat Bottom Hold", pattern:"squat", reps:"20-30s hold", muscle:"legs", sub:"quad", isometric:true},
+    {name:"Dip Bottom Hold", pattern:"dip", reps:"15-20s hold", muscle:"arms", sub:"triceps", isometric:true},
+    {name:"Reverse Plank Hold", pattern:"core", reps:"20-30s hold", muscle:"core", isometric:true},
+    {name:"Boat Pose Hold", pattern:"core", reps:"20-30s hold", muscle:"core", isometric:true},
+    {name:"Wall Handstand Hold", pattern:"overhead", reps:"10-20s hold", muscle:"shoulders", sub:"front", isometric:true},
     {name:"Squat Jump to Reach", pattern:"squat", reps:"12", combo:true},
+    {name:"Box Jump", pattern:"squat", reps:"10", combo:true},
+    {name:"Broad Jump to Sprint", pattern:"cardio", reps:"8", combo:true},
+    {name:"Plyo Push-up", pattern:"pushup", reps:"8", combo:true},
+    {name:"Bodyweight Turkish Get-Up", pattern:"core", reps:"5/side", combo:true},
   ],
   dumbbell:[
     {name:"Split Squat", pattern:"lunge", reps:"10/leg", muscle:"legs", sub:"quad"},
@@ -975,6 +1182,7 @@ const ROUND_EXERCISES = {
     {name:"DB Floor Press", pattern:"press", reps:"10", muscle:"chest", sub:"flat"},
     {name:"1-Arm DB Row", pattern:"pull", reps:"10/side", muscle:"back", sub:"thickness"},
     {name:"DB Shoulder Press", pattern:"overhead", reps:"10", muscle:"shoulders", sub:"front"},
+    {name:"DB Waiter's Hold", pattern:"overhead", reps:"20-30s/side", muscle:"shoulders", sub:"front", isometric:true},
     {name:"DB Curl", pattern:"curl", reps:"12", muscle:"arms", sub:"biceps"},
     {name:"Overhead Triceps Extension", pattern:"triceps", reps:"12", muscle:"arms", sub:"triceps"},
     {name:"DB Goblet Squat", pattern:"squat", reps:"12", muscle:"legs", sub:"quad"},
@@ -988,6 +1196,16 @@ const ROUND_EXERCISES = {
     {name:"DB Squat to Press", pattern:"squat", reps:"10", combo:true},
     {name:"DB Lunge to Overhead Press", pattern:"lunge", reps:"8/leg", combo:true},
     {name:"DB Clean and Press", pattern:"hinge", reps:"8", combo:true},
+    {name:"DB Snatch", pattern:"hinge", reps:"8/side", combo:true},
+    {name:"DB Clean", pattern:"hinge", reps:"8", combo:true},
+    {name:"Farmer's Carry", pattern:"hinge", reps:"30s", combo:true},
+    {name:"Suitcase Carry", pattern:"hinge", reps:"30s/side", combo:true},
+    {name:"DB Turkish Get-Up", pattern:"core", reps:"5/side", combo:true},
+    {name:"DB Chest Squeeze Hold", pattern:"press", reps:"15-20s hold", muscle:"chest", sub:"flat", isometric:true},
+    {name:"DB Row Hold", pattern:"pull", reps:"15-20s hold", muscle:"back", sub:"thickness", isometric:true},
+    {name:"DB Curl Hold", pattern:"curl", reps:"15-20s hold", muscle:"arms", sub:"biceps", isometric:true},
+    {name:"DB Squat Hold", pattern:"squat", reps:"20-30s hold", muscle:"legs", sub:"quad", isometric:true},
+    {name:"DB Suitcase Hold (Static)", pattern:"core", reps:"20-30s hold", muscle:"core", isometric:true},
   ],
 };
 
@@ -1004,6 +1222,7 @@ let state = {
   rest:{active:false, seconds:0, total:0, handle:null},
   roundTimer:{active:false, seconds:0, phase:'on', currentIndex:0, currentRound:1, roundsCompleted:0, intervalsCompleted:0, handle:null},
   historyCache:[],
+  stopwatch:{seconds:0, running:false, handle:null},
   autosaveHandle:null,
 };
 
@@ -1063,6 +1282,29 @@ function localISODate(d){
   const day = String(d.getDate()).padStart(2,'0');
   return `${y}-${m}-${day}`;
 }
+// ---------- SOUND ----------
+let audioCtx = null;
+function playBeep(pattern){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    const now = audioCtx.currentTime;
+    const notes = pattern === 'done' ? [660, 880, 1100] : pattern === 'transition' ? [520, 780] : [700];
+    notes.forEach((freq, i)=>{
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const start = now + i*0.14;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.25, start+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start+0.13);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(start); osc.stop(start+0.14);
+    });
+  }catch(e){}
+}
+
 function todayStr(){ return localISODate(new Date()); }
 function fmtDate(iso){
   const d = new Date(iso+"T00:00:00");
@@ -1368,15 +1610,25 @@ function tierPool(muscles, focus, tier, applySubFilter, exclude){
   });
   return pool;
 }
-function pickFromTier(muscles, focus, tier, count, exclude){
-  let picked = shuffledArr(tierPool(muscles, focus, tier, true, exclude)).slice(0, count);
+const COMPOUND_PATTERNS = new Set(['press','incline','dip','pushup','overhead','pull','pullup','squat','hinge','lunge','legpress','hipthrust']);
+function isCompoundPattern(pattern){ return COMPOUND_PATTERNS.has(pattern); }
+
+function pickFromTier(muscles, focus, tier, count, exclude, preferCompound){
+  let pool = tierPool(muscles, focus, tier, true, exclude);
+  if(preferCompound){
+    pool = [...shuffledArr(pool.filter(e=>isCompoundPattern(e.pattern))), ...shuffledArr(pool.filter(e=>!isCompoundPattern(e.pattern)))];
+  } else {
+    pool = shuffledArr(pool);
+  }
+  let picked = pool.slice(0, count);
   if(picked.length < count){
     const relaxed = shuffledArr(tierPool(muscles, focus, tier, false, exclude)).filter(e=>!picked.some(p=>p.name===e.name));
     picked = picked.concat(relaxed).slice(0, count);
   }
   return picked;
 }
-function pickTieredExercises(day, counts){
+function pickTieredExercises(day, counts, duration){
+  const preferCompound = duration && duration < 45;
   const {muscles, focus} = getFocusMuscles(day);
   const exclude = new Set();
   let primary = [];
@@ -1384,11 +1636,32 @@ function pickTieredExercises(day, counts){
     const priPool = shuffledArr(tierPool([focus.priorityMuscle], focus, 'main', true, exclude));
     if(priPool.length){ primary.push(priPool[0]); exclude.add(priPool[0].name); }
   }
-  primary = primary.concat(pickFromTier(muscles, focus, 'main', counts.primary - primary.length, exclude));
+  primary = primary.concat(pickFromTier(muscles, focus, 'main', counts.primary - primary.length, exclude, preferCompound));
   primary.forEach(e=>exclude.add(e.name));
-  const prime = pickFromTier(muscles, focus, 'prime', counts.prime, exclude);
+  let prime = pickFromTier(muscles, focus, 'prime', counts.prime, exclude, preferCompound);
   prime.forEach(e=>exclude.add(e.name));
-  const pump = pickFromTier(muscles, focus, 'pump', counts.pump, exclude);
+  let pump = pickFromTier(muscles, focus, 'pump', counts.pump, exclude, false);
+  const all = [...primary, ...prime, ...pump];
+  if(!all.some(e=>e.isometric)){
+    const usedNames = new Set(all.map(e=>e.name));
+    let isoPool = [];
+    muscles.forEach(m=>{
+      (MUSCLES[m].exercises||[]).forEach(ex=>{
+        if(ex.isometric && !usedNames.has(ex.name)){
+          const matchesSub = !(focus && focus.subMap && focus.subMap[m] && ex.sub && ex.sub !== focus.subMap[m]);
+          isoPool.push({...ex, muscle:m, matchesSub});
+        }
+      });
+    });
+    const preferred = shuffledArr(isoPool.filter(e=>e.matchesSub));
+    const fallback = shuffledArr(isoPool.filter(e=>!e.matchesSub));
+    const chosen = (preferred[0] || fallback[0]);
+    if(chosen){
+      if(pump.length){ pump = [...pump.slice(0,-1), chosen]; }
+      else if(prime.length){ prime = [...prime.slice(0,-1), chosen]; }
+      else { pump = [...pump, chosen]; }
+    }
+  }
   return {primary, prime, pump};
 }
 function pickRoundExercises(day, equipment, count, duration){
@@ -1426,6 +1699,10 @@ function pickRoundExercises(day, equipment, count, duration){
   if(picked.length < count){
     const anyLeft = shuffled(pool.filter(e=>!picked.some(p=>p.name===e.name)));
     picked = picked.concat(anyLeft).slice(0, count);
+  }
+  if(!picked.some(e=>e.isometric)){
+    const isoOptions = shuffled(pool.filter(e=>e.isometric && matches(e, false) && !picked.some(p=>p.name===e.name)));
+    if(isoOptions.length && picked.length){ picked = [...picked.slice(0,-1), isoOptions[0]]; }
   }
   return picked;
 }
@@ -1488,7 +1765,7 @@ function buildSession(){
     return [...warmups, ...roundEx, ...cooldown];
   }
 
-  const tiered = pickTieredExercises(day, cfg);
+  const tiered = pickTieredExercises(day, cfg, state.duration);
   const mkSets = e => ({...e, sets: Array.from({length:e.sets}, ()=>({weight:'', reps:'', done:false}))});
   const primary = tiered.primary.map(e=>({...mkSets(e), category:'primary'}));
   const prime = tiered.prime.map(e=>({...mkSets(e), category:'prime'}));
@@ -1640,6 +1917,7 @@ async function renderExerciseList(){
             </div>
           </div>
           <div class="ex-body">
+            ${muscleMapBlock(ex.muscle || 'full', ex.sub, ex.pattern)}
             <div class="demo-box">
               <a class="video-link" href="${youtubeSearchUrl(ex.name)}" target="_blank" rel="noopener">
                 <div class="video-icon">▶</div>
@@ -1647,8 +1925,9 @@ async function renderExerciseList(){
               </a>
               <div class="demo-steps">${DEMO_STEPS[ex.pattern].map((s,si)=>`<div><b>${si+1}.</b> ${s}</div>`).join('')}</div>
             </div>
+            ${exerciseTimerHTML('Time your set — how many reps can you get?')}
             <table class="set-table">
-              <tr><th class="set-num">#</th><th>Weight (kg)</th><th>Reps</th><th class="set-done">✓</th></tr>
+              <tr><th class="set-num">#</th><th>Weight (kg)</th><th>Reps</th><th class="set-done"><div class="check tick-all ${ex.sets.every(s=>s.done)?'on':''}" data-idx="${i}" title="Tick all sets">${ex.sets.every(s=>s.done)?'✓':''}</div></th></tr>
               ${ex.sets.map((s,si)=>`
                 <tr>
                   <td class="set-num">${si+1}</td>
@@ -1678,6 +1957,7 @@ async function renderExerciseList(){
           </div>
           <div class="ex-body">
             <div class="simple-body">
+              ${muscleMapBlock(ex.muscle || 'full', ex.sub, ex.pattern)}
               <div class="demo-box">
                 <a class="video-link" href="${youtubeSearchUrl(ex.name)}" target="_blank" rel="noopener">
                   <div class="video-icon">▶</div>
@@ -1685,6 +1965,7 @@ async function renderExerciseList(){
                 </a>
                 <div class="demo-steps">${DEMO_STEPS[ex.pattern].map((s,si)=>`<div><b>${si+1}.</b> ${s}</div>`).join('')}</div>
               </div>
+              ${exerciseTimerHTML('Time this movement — ' + ex.duration)}
               <div class="simple-row">
                 <div class="simple-duration">${ex.duration}</div>
                 <div class="check ${ex.done?'on':''}" data-simple="${i}">${ex.done?'✓':''}</div>
@@ -1697,6 +1978,7 @@ async function renderExerciseList(){
       const head = card.querySelector('.ex-head');
       const cardBody = card.querySelector('.ex-body');
       head.onclick = (e)=>{ if(e.target.closest('.btn-swap') || e.target.closest('.btn-delete')) return; cardBody.classList.toggle('open'); };
+      wireExerciseTimer(card);
       card.querySelectorAll('input').forEach(inp=>{
         inp.addEventListener('input', e=>{
           const {ex:exIdx, set:setIdx, field} = e.target.dataset;
@@ -1717,6 +1999,18 @@ async function renderExerciseList(){
           saveInProgressSession();
         };
       });
+      const tickAll = card.querySelector('.tick-all');
+      if(tickAll){
+        tickAll.onclick = (e)=>{
+          e.stopPropagation();
+          const exIdx = parseInt(tickAll.dataset.idx);
+          const exObj = state.session.exercises[exIdx];
+          const makeDone = !exObj.sets.every(s=>s.done);
+          exObj.sets.forEach(s=>{ s.done = makeDone; });
+          saveInProgressSession();
+          renderExerciseList();
+        };
+      }
       const simpleChk = card.querySelector('.check[data-simple]');
       if(simpleChk){
         simpleChk.onclick = (e)=>{
@@ -1795,12 +2089,26 @@ function renderRoundCard(items, format, roundMinutes){
   const rt = state.roundTimer;
   const isCycling = format === 'emom' || format === 'interval';
   const listHtml = items.map((ex,idx)=>`
-    <div class="round-list-item ${isCycling && idx===rt.currentIndex ? 'active' : ''}">
-      <span class="rli-check ${ex.done?'on':''}" data-ridx="${ex._idx}">${ex.done?'✓':''}</span>
-      <span class="rli-name">${ex.name}</span>
-      <span class="rli-reps">${format==='interval' ? '' : ex.reps}</span>
-      <span class="rli-swap" data-ridx="${ex._idx}">🔁</span>
-      <span class="rli-delete" data-ridx="${ex._idx}">✕</span>
+    <div class="round-list-item-wrap">
+      <div class="round-list-item ${isCycling && idx===rt.currentIndex ? 'active' : ''}" data-ridx="${ex._idx}">
+        <span class="rli-check ${ex.done?'on':''}" data-ridx="${ex._idx}">${ex.done?'✓':''}</span>
+        <span class="rli-name">${ex.name}</span>
+        <span class="rli-reps">${format==='interval' ? '' : ex.reps}</span>
+        <span class="rli-caret">▾</span>
+        <span class="rli-swap" data-ridx="${ex._idx}">🔁</span>
+        <span class="rli-delete" data-ridx="${ex._idx}">✕</span>
+      </div>
+      <div class="rli-expand" data-ridx-expand="${ex._idx}">
+        ${muscleMapBlock(ex.muscle || 'full', ex.sub, ex.pattern)}
+        <div class="demo-box">
+          <a class="video-link" href="${youtubeSearchUrl(ex.name)}" target="_blank" rel="noopener">
+            <div class="video-icon">▶</div>
+            <div><div class="video-title">Watch demo</div><div class="video-sub">${ex.name} · form tutorial on YouTube</div></div>
+          </a>
+          <div class="demo-steps">${(DEMO_STEPS[ex.pattern]||[]).map((s,si)=>`<div><b>${si+1}.</b> ${s}</div>`).join('')}</div>
+        </div>
+        ${exerciseTimerHTML('Time your reps — ' + (ex.reps||ex.duration||''))}
+      </div>
     </div>`).join('');
 
   let headSub, timerLabel, countHtml;
@@ -1846,6 +2154,7 @@ function renderRoundCard(items, format, roundMinutes){
   `;
   const card = wrap.firstElementChild;
   card.querySelector('#roundTimerBtn').onclick = ()=> toggleRoundTimer(items, format, roundMinutes);
+  wireExerciseTimer(card);
   if(format==='amrap'){
     card.querySelector('#roundMinus').onclick = ()=>{ state.roundTimer.roundsCompleted = Math.max(0, state.roundTimer.roundsCompleted-1); updateRoundCountDisplay(format, roundMinutes); };
     card.querySelector('#roundPlus').onclick = ()=>{ state.roundTimer.roundsCompleted++; updateRoundCountDisplay(format, roundMinutes); };
@@ -1867,6 +2176,13 @@ function renderRoundCard(items, format, roundMinutes){
       saveInProgressSession();
     };
   });
+  card.querySelectorAll('.round-list-item').forEach(row=>{
+    row.onclick = (e)=>{
+      if(e.target.closest('.rli-check') || e.target.closest('.rli-swap') || e.target.closest('.rli-delete')) return;
+      const expand = card.querySelector(`.rli-expand[data-ridx-expand="${row.dataset.ridx}"]`);
+      if(expand) expand.classList.toggle('open');
+    };
+  });
   return card;
 }
 
@@ -1885,12 +2201,14 @@ function toggleRoundTimer(items, format, roundMinutes){
         if(state.roundTimer.seconds <= 0){
           state.roundTimer.intervalsCompleted++;
           if(state.roundTimer.intervalsCompleted >= roundMinutes){
+            playBeep('done');
             stopRoundTimer();
             showToast('EMOM complete! 🎉');
             updateRoundNumDisplay();
             updateRoundCountDisplay(format, roundMinutes);
             return;
           }
+          playBeep('transition');
           const liveLen = getMainRoundItems().length;
           state.roundTimer.currentIndex = liveLen ? (state.roundTimer.currentIndex+1) % liveLen : 0;
           state.roundTimer.seconds = 60;
@@ -1901,6 +2219,7 @@ function toggleRoundTimer(items, format, roundMinutes){
         const totalRounds = state.session.intervalRounds;
         if(state.roundTimer.seconds <= 0){
           if(state.roundTimer.phase === 'on'){
+            playBeep('transition');
             state.roundTimer.phase = 'off';
             state.roundTimer.seconds = scheme.off;
           } else {
@@ -1909,6 +2228,7 @@ function toggleRoundTimer(items, format, roundMinutes){
             if(state.roundTimer.currentIndex === 0){
               state.roundTimer.currentRound++;
               if(state.roundTimer.currentRound > totalRounds){
+                playBeep('done');
                 stopRoundTimer();
                 showToast('Interval complete! 🎉');
                 state.roundTimer.currentRound = totalRounds;
@@ -1917,6 +2237,7 @@ function toggleRoundTimer(items, format, roundMinutes){
                 return;
               }
             }
+            playBeep('transition');
             state.roundTimer.phase = 'on';
             state.roundTimer.seconds = scheme.on;
             highlightActiveRound();
@@ -1926,6 +2247,7 @@ function toggleRoundTimer(items, format, roundMinutes){
       } else {
         if(state.roundTimer.seconds <= 0){
           state.roundTimer.seconds = 0;
+          playBeep('done');
           stopRoundTimer();
           showToast("Time's up! Log your rounds 🎉");
         }
@@ -2024,15 +2346,18 @@ function openSwapPicker(idx, ex, options){
     ? `Same-or-lower intensity alternatives${ex.muscle ? ' for '+(MUSCLES[ex.muscle]?MUSCLES[ex.muscle].label:ex.muscle) : ''}`
     : `Alternatives for this slot`;
   const TIER_BADGE = {main:'Main Party', prime:'After Party', pump:'Hangover'};
+  const myIntensity = getIntensityRank(ex.pattern);
   const list = document.getElementById('swapPickerList');
   list.innerHTML = options.map((opt,i)=>{
-    const intensityDot = isMain && !isTiered
-      ? (getIntensityRank(opt.pattern) >= 90 ? '🔴' : getIntensityRank(opt.pattern) >= 60 ? '🟡' : '🟢')
-      : '';
+    let intensityLabel = '';
+    if(isMain){
+      const diff = getIntensityRank(opt.pattern) - myIntensity;
+      intensityLabel = diff < 0 ? 'Easier' : diff > 0 ? 'Harder' : 'Same';
+    }
     const tierBadge = isTiered && opt.tier ? `<span class="swap-tier-badge">${TIER_BADGE[opt.tier]}</span>` : '';
     return `<div class="swap-option" data-oi="${i}">
       <span>${tierBadge}${opt.name}</span>
-      <span class="swap-option-meta">${intensityDot} ${opt.reps || opt.duration || ''}</span>
+      <span class="swap-option-meta">${intensityLabel ? `<span class="intensity-label intensity-${intensityLabel.toLowerCase()}">${intensityLabel}</span> · ` : ''}${opt.reps || opt.duration || ''}</span>
     </div>`;
   }).join('');
   list.querySelectorAll('.swap-option').forEach((row,i)=>{
@@ -2093,7 +2418,7 @@ function startRest(pattern, exName){
   state.rest.handle = setInterval(()=>{
     state.rest.seconds--;
     updateRestNum();
-    if(state.rest.seconds <= 0){ endRest(); }
+    if(state.rest.seconds <= 0){ playBeep('done'); endRest(); }
   }, 1000);
 }
 function updateRestNum(){ restNum.textContent = Math.max(0, state.rest.seconds); }
@@ -2220,6 +2545,31 @@ document.getElementById('celebrateDoneBtn').onclick = ()=>{ celebrateOverlay.cla
 
 // ---------- SETTINGS ----------
 const settingsOverlay = document.getElementById('settingsOverlay');
+// ---------- STOPWATCH ----------
+const stopwatchOverlay = document.getElementById('stopwatchOverlay');
+const stopwatchNum = document.getElementById('stopwatchNum');
+const stopwatchToggle = document.getElementById('stopwatchToggle');
+document.getElementById('stopwatchBtn').onclick = ()=>{ stopwatchOverlay.classList.add('show'); updateStopwatchDisplay(); };
+document.getElementById('stopwatchClose').onclick = ()=>{ stopwatchOverlay.classList.remove('show'); };
+document.getElementById('stopwatchReset').onclick = ()=>{
+  clearInterval(state.stopwatch.handle);
+  state.stopwatch = {seconds:0, running:false, handle:null};
+  stopwatchToggle.textContent = 'Start';
+  stopwatchToggle.classList.remove('stop');
+  updateStopwatchDisplay();
+};
+stopwatchToggle.onclick = ()=>{
+  state.stopwatch.running = !state.stopwatch.running;
+  stopwatchToggle.textContent = state.stopwatch.running ? 'Pause' : 'Start';
+  stopwatchToggle.classList.toggle('stop', state.stopwatch.running);
+  if(state.stopwatch.running){
+    state.stopwatch.handle = setInterval(()=>{ state.stopwatch.seconds++; updateStopwatchDisplay(); }, 1000);
+  } else {
+    clearInterval(state.stopwatch.handle);
+  }
+};
+function updateStopwatchDisplay(){ stopwatchNum.textContent = fmtMMSS(state.stopwatch.seconds); }
+
 document.getElementById('gearBtn').onclick = async ()=>{
   const hist = await loadHistory();
   document.getElementById('statTotalSessions').textContent = hist.length;
