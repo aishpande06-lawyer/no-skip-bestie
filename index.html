@@ -908,7 +908,7 @@ const DUR_CONFIG = {
   75:{warmup:4, primary:2, prime:2, pump:3, cardio:1, cooldown:3},
   90:{warmup:4, primary:2, prime:2, pump:3, cardio:2, cooldown:3},
 };
-const CATEGORY_LABEL = {warmup:"Core & Cardio", mobility:"Mobility Drills", primary:"Main Workout", prime:"Prime", pump:"Pump", main:"Workout", cardio:"Cardio", cooldown:"Cool-down"};
+const CATEGORY_LABEL = {warmup:"Core & Cardio", mobility:"Mobility Drills", primary:"Main Party", prime:"After Party", pump:"Hangover", main:"Workout", cardio:"Cardio", cooldown:"Cool-down"};
 
 const ROUND_FORMATS = {
   straight:{label:"Straight Sets", hint:"Classic sets & reps, logged individually."},
@@ -1994,11 +1994,11 @@ function openSwapPicker(idx, ex, options){
   const isMain = ex.category === 'main' || ex.category === 'primary' || ex.category === 'prime' || ex.category === 'pump';
   const isTiered = ex.category === 'primary' || ex.category === 'prime' || ex.category === 'pump';
   document.getElementById('swapPickerSub').textContent = isTiered
-    ? `Any tier — Main, Prime, or Pump — for ${MUSCLES[ex.muscle]?MUSCLES[ex.muscle].label:ex.muscle}`
+    ? `Any tier — Main Party, After Party, or Hangover — for ${MUSCLES[ex.muscle]?MUSCLES[ex.muscle].label:ex.muscle}`
     : isMain
     ? `Same-or-lower intensity alternatives${ex.muscle ? ' for '+(MUSCLES[ex.muscle]?MUSCLES[ex.muscle].label:ex.muscle) : ''}`
     : `Alternatives for this slot`;
-  const TIER_BADGE = {main:'Main', prime:'Prime', pump:'Pump'};
+  const TIER_BADGE = {main:'Main Party', prime:'After Party', pump:'Hangover'};
   const list = document.getElementById('swapPickerList');
   list.innerHTML = options.map((opt,i)=>{
     const intensityDot = isMain && !isTiered
