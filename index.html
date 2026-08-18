@@ -1395,7 +1395,7 @@ function computeWeekPlan(){
   const anchor = getRotationAnchor(pattern);
   const today = new Date();
   for(let i=-7;i<7;i++){
-    const d = new Date(today); d.setDate(today.getDate()+i);
+    const d = new Date(today); d.setDate(today.getDate()+i); d.setHours(0,0,0,0);
     const iso = localISODate(d);
     const diffDays = Math.round((d - anchor.date) / 86400000);
     const idx = posMod(anchor.index + diffDays, pattern.length);
