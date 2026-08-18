@@ -65,6 +65,9 @@
   .date-chip.selected .num, .date-chip.selected .dow{color:var(--chalk);}
   .date-chip.selected .num{border-bottom:2px solid var(--pink); padding-bottom:2px;}
   .date-chip .flag{position:absolute; top:0; left:50%; transform:translateX(-50%); width:7px; height:7px; background:var(--pink); border-radius:50%; display:none;}
+  .today-dot{width:4px; height:4px; background:var(--mint); border-radius:50%; margin:3px auto 0;}
+  .date-chip.is-today .num{color:var(--mint);}
+  .date-chip.is-today.selected .num{color:var(--chalk);}
   .date-chip.selected .flag{display:block;}
 
   /* tabs */
@@ -1070,18 +1073,23 @@ const dateStrip = document.getElementById('dateStrip');
 function renderDateStrip(){
   dateStrip.innerHTML = '';
   const today = new Date();
-  for(let i=0;i<7;i++){
+  const todayIso = localISODate(today);
+  let todayChip = null;
+  for(let i=-7;i<7;i++){
     const d = new Date(today);
     d.setDate(today.getDate()+i);
     const iso = localISODate(d);
+    const isToday = iso === todayIso;
     const chip = document.createElement('div');
-    chip.className = 'date-chip' + (iso===state.selectedDate ? ' selected' : '');
+    chip.className = 'date-chip' + (iso===state.selectedDate ? ' selected' : '') + (isToday ? ' is-today' : '');
     const planned = state.weekPlan[iso];
     const tag = planned ? `<div class="focus-tag ${planned==='rest'?'rest':''}">${planned==='rest'?'Rest':dayName(planned)}</div>` : '';
-    chip.innerHTML = `<div class="flag"></div><div class="num display">${d.getDate()}</div><div class="dow">${d.toLocaleDateString('en-US',{weekday:'short'})}</div>${tag}`;
+    chip.innerHTML = `<div class="flag"></div><div class="num display">${d.getDate()}</div><div class="dow">${d.toLocaleDateString('en-US',{weekday:'short'})}</div>${isToday ? '<div class="today-dot"></div>' : ''}${tag}`;
     chip.onclick = ()=>{ state.selectedDate = iso; state.focusOverride = false; state.focusVariantOverride = null; renderDateStrip(); refreshFocusReadout(); };
+    if(isToday) todayChip = chip;
     dateStrip.appendChild(chip);
   }
+  if(todayChip){ requestAnimationFrame(()=>{ todayChip.scrollIntoView({inline:'start', block:'nearest'}); }); }
 }
 renderDateStrip();
 
@@ -1126,14 +1134,15 @@ function computeWeekPlan(){
   if(!state.split) return;
   const splitDef = SPLITS[state.split];
   const today = new Date();
-  for(let i=0;i<7;i++){
+  const posMod = (n, m) => ((n % m) + m) % m;
+  for(let i=-7;i<7;i++){
     const d = new Date(today); d.setDate(today.getDate()+i);
     const iso = localISODate(d);
     if(splitDef.pattern){
-      state.weekPlan[iso] = splitDef.pattern[i % splitDef.pattern.length];
+      state.weekPlan[iso] = splitDef.pattern[posMod(i, splitDef.pattern.length)];
     } else {
       const days = splitDef.days;
-      state.weekPlan[iso] = (i===6) ? 'rest' : days[i % days.length];
+      state.weekPlan[iso] = (posMod(i, 7) === 6) ? 'rest' : days[posMod(i, days.length)];
     }
   }
 }
