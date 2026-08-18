@@ -830,8 +830,8 @@ const REST_SECONDS = {
 
 const SPLITS = {
   bro:{label:"Bro Split", days:["chest","back","shoulders","legs","arms"]},
-  ppl:{label:"Push/Pull/Legs", days:["push","pull","legs"]},
-  ul:{label:"Upper/Lower", days:["upper","lower"]},
+  ppl:{label:"Push/Pull/Legs", pattern:["push","pull","legs","rest"]},
+  ul:{label:"Upper/Lower", pattern:["upper","lower","rest"]},
   full:{label:"Full Body", days:["full"]},
   gymbad:{label:"Gym + Badminton", titleOnly:true, pattern:["push","badminton","pull","light","legs","badminton","light"]},
 };
@@ -1165,7 +1165,9 @@ const intervalRoundsChips = document.getElementById('intervalRoundsChips');
 function refreshFocusReadout(){
   if(!state.split){ focusReadout.style.display = 'none'; planLine.style.display = 'none'; updateGenerateEnabled(); return; }
   focusReadout.style.display = 'block';
-  const trainingDays = Object.values(state.weekPlan).filter(v=>v!=='rest').length;
+  const next7 = [];
+  for(let i=0;i<7;i++){ const d = new Date(); d.setDate(d.getDate()+i); next7.push(localISODate(d)); }
+  const trainingDays = next7.filter(iso=>state.weekPlan[iso] && state.weekPlan[iso]!=='rest').length;
   planLine.style.display = 'block';
   planLine.textContent = `${SPLITS[state.split].label} · ${trainingDays} DAYS/WEEK`;
   const planned = state.weekPlan[state.selectedDate];
@@ -1201,7 +1203,7 @@ function refreshFocusReadout(){
   // build override chip row (hidden until link tapped)
   dayChips.innerHTML = '';
   const splitDef = SPLITS[state.split];
-  const allDayTypes = splitDef.pattern ? [...new Set(splitDef.pattern)] : [...splitDef.days];
+  const allDayTypes = (splitDef.pattern ? [...new Set(splitDef.pattern)] : [...splitDef.days]).filter(d=>d!=='rest');
   allDayTypes.forEach(d=>{
     const chip = document.createElement('div');
     chip.className = 'chip' + (d===active ? ' selected' : '');
