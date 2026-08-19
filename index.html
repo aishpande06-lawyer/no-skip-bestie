@@ -116,6 +116,18 @@
   .date-chip .focus-tag.rest{color:var(--mint);}
 
   .dur-row{display:flex; gap:6px; flex-wrap:wrap;}
+  .overcrowd-toggle{
+    display:flex; align-items:center; gap:12px; background:var(--panel-2); border:1px solid var(--line);
+    border-radius:12px; padding:12px 14px; margin-top:10px; cursor:pointer;
+  }
+  .overcrowd-toggle.active{background:var(--pink-dim); border-color:var(--pink);}
+  .overcrowd-check{
+    width:22px; height:22px; border-radius:7px; border:2px solid var(--line); background:var(--panel);
+    flex:none; display:flex; align-items:center; justify-content:center; color:var(--pink-ink); font-size:13px; font-weight:700;
+  }
+  .overcrowd-toggle.active .overcrowd-check{background:var(--pink); border-color:var(--pink);}
+  .overcrowd-title{font-size:13px; font-weight:700;}
+  .overcrowd-sub{font-size:11px; color:var(--muted); margin-top:2px;}
   .dur-chip{
     flex:1; min-width:52px; text-align:center; background:var(--panel-2); border:1px solid var(--line);
     border-radius:10px; padding:10px 0; cursor:pointer; font-family:'JetBrains Mono'; font-size:12px;
@@ -165,6 +177,14 @@
   .session-sub{font-size:12px; color:var(--muted); margin-top:4px;}
 
   /* timer / plate loader */
+  .rest-slider-bar{
+    display:none; background:var(--pink-dim); border:1px solid var(--pink); border-radius:14px;
+    padding:12px 16px; margin:12px 0;
+  }
+  .rest-slider-bar.show{display:block;}
+  .rest-slider-top{display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:700; color:var(--pink); margin-bottom:8px;}
+  .rest-slider-track{height:8px; border-radius:5px; background:var(--panel-2); overflow:hidden;}
+  .rest-slider-fill{height:100%; background:var(--pink); border-radius:5px; width:100%; transition:width 1s linear;}
   .timer-card{
     background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:16px;
     box-shadow:0 3px 14px rgba(255,45,146,0.08);
@@ -314,7 +334,7 @@
     display:flex; align-items:center; gap:12px; background:var(--panel-2); border-radius:10px;
     padding:10px 14px; margin-top:14px;
   }
-  .muscle-map svg{width:44px; height:auto; flex:none;}
+  .muscle-map svg{width:72px; height:auto; flex:none;}
   .muscle-map-label{font-size:13px; font-weight:700; color:var(--pink);}
   .ex-timer{
     display:flex; align-items:center; justify-content:space-between; background:var(--panel-2);
@@ -406,6 +426,12 @@
   .rest-num{font-family:'Fredoka'; font-size:56px; font-weight:700; z-index:2;}
   .rest-label{font-size:15px; color:var(--muted); z-index:2;}
   .rest-actions{display:flex; flex-direction:column; align-items:center; gap:8px; margin-top:10px;}
+  .tw-tabs{display:flex; justify-content:center; gap:8px; margin:16px 0 0;}
+  .tw-tab{padding:8px 20px; border-radius:20px; font-weight:700; font-size:13px; color:var(--muted); background:var(--panel-2); cursor:pointer;}
+  .tw-tab.active{background:var(--pink); color:var(--pink-ink);}
+  .tw-presets{display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; justify-content:center;}
+  .tw-preset{padding:7px 14px; border-radius:10px; background:var(--panel-2); border:1px solid var(--line); font-size:12px; font-weight:700; color:var(--chalk); cursor:pointer;}
+  .tw-preset.active{background:var(--pink); color:var(--pink-ink); border-color:var(--pink);}
   .skip-btn{
     background:var(--panel-2); border:1px solid var(--line); color:var(--chalk); border-radius:20px;
     padding:10px 20px; font-size:13px; font-weight:600; cursor:pointer; font-family:'Fredoka';
@@ -466,6 +492,14 @@
       <div class="label">Duration</div>
       <div class="dur-row" id="durRow"></div>
 
+      <div class="overcrowd-toggle" id="overcrowdToggle" style="display:none;">
+        <div class="overcrowd-check" id="overcrowdCheck"></div>
+        <div>
+          <div class="overcrowd-title">🏋️ Overcrowding Solution</div>
+          <div class="overcrowd-sub">Prioritize compound lifts — less time waiting on machines</div>
+        </div>
+      </div>
+
       <div class="label" id="formatLabel" style="display:none;">Format</div>
       <div class="chip-row" id="formatChips" style="display:none;"></div>
       <div class="format-hint" id="formatHint" style="display:none;"></div>
@@ -487,6 +521,14 @@
           <div class="session-title display" id="sessionTitle">Push Day</div>
           <div class="session-sub" id="sessionSub">6 exercises · ~45 min</div>
         </div>
+      </div>
+
+      <div class="rest-slider-bar" id="restSliderBar">
+        <div class="rest-slider-top">
+          <span id="restSliderLabel">Resting</span>
+          <span class="mono" id="restSliderNum">0:00</span>
+        </div>
+        <div class="rest-slider-track"><div class="rest-slider-fill" id="restSliderFill"></div></div>
       </div>
 
       <div class="timer-card">
@@ -551,13 +593,36 @@
   </div>
 </div>
 
-<!-- STOPWATCH -->
+<!-- TIMER / STOPWATCH -->
 <div class="rest-overlay" id="stopwatchOverlay">
   <div class="rest-top">
     <div class="rest-back" id="stopwatchClose">‹</div>
-    <div class="rest-title display">Stopwatch</div>
+    <div class="rest-title display">Timer</div>
   </div>
-  <div class="rest-mid">
+  <div class="tw-tabs">
+    <div class="tw-tab active" id="twTabTimer">Timer</div>
+    <div class="tw-tab" id="twTabStopwatch">Stopwatch</div>
+  </div>
+  <div class="rest-mid" id="twTimerPane">
+    <div class="rest-ring-wrap">
+      <svg viewBox="0 0 100 100" class="ring-a"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--pink)" stroke-width="2.5" stroke-dasharray="180 100"/></svg>
+      <svg viewBox="0 0 100 100" class="ring-b"><circle cx="50" cy="50" r="36" fill="none" stroke="var(--mint)" stroke-width="2.5" stroke-dasharray="150 120"/></svg>
+      <svg viewBox="0 0 100 100" class="ring-c"><circle cx="50" cy="50" r="30" fill="none" stroke="var(--purple)" stroke-width="2.5" stroke-dasharray="120 100"/></svg>
+      <div class="rest-num mono" id="countdownNum">01:00</div>
+    </div>
+    <div class="tw-presets" id="timerPresets">
+      <div class="tw-preset" data-secs="30">30s</div>
+      <div class="tw-preset active" data-secs="60">60s</div>
+      <div class="tw-preset" data-secs="90">90s</div>
+      <div class="tw-preset" data-secs="120">2m</div>
+      <div class="tw-preset" data-secs="180">3m</div>
+    </div>
+    <div class="rest-actions" style="flex-direction:row; gap:10px;">
+      <div class="skip-btn" id="countdownReset">Reset</div>
+      <button class="timer-btn" id="countdownToggle" style="margin:0;">Start</button>
+    </div>
+  </div>
+  <div class="rest-mid" id="twStopwatchPane" style="display:none;">
     <div class="rest-ring-wrap">
       <svg viewBox="0 0 100 100" class="ring-a"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--pink)" stroke-width="2.5" stroke-dasharray="180 100"/></svg>
       <svg viewBox="0 0 100 100" class="ring-b"><circle cx="50" cy="50" r="36" fill="none" stroke="var(--mint)" stroke-width="2.5" stroke-dasharray="150 120"/></svg>
@@ -626,6 +691,8 @@ const MUSCLES = {
     {name:"Dips", pattern:"dip", sets:3, reps:"8-12", sub:"flat", tier:"prime"},
     {name:"Push-ups", pattern:"pushup", sets:3, reps:"AMRAP", sub:"flat", tier:"pump"},
     {name:"Machine Chest Press", pattern:"press", sets:3, reps:"10-12", sub:"flat", tier:"prime"},
+    {name:"Seated Chest Press Machine", pattern:"press", sets:3, reps:"10-12", sub:"flat", tier:"prime"},
+    {name:"Assisted Dip Machine", pattern:"dip", sets:3, reps:"10-12", sub:"flat", tier:"prime"},
     {name:"Smith Machine Bench Press", pattern:"press", sets:4, reps:"6-8", sub:"flat", tier:"main"},
     {name:"Weighted Dips", pattern:"dip", sets:4, reps:"6-8", sub:"flat", tier:"main"},
     {name:"Barbell Floor Press", pattern:"press", sets:4, reps:"6-8", sub:"flat", tier:"main"},
@@ -653,6 +720,9 @@ const MUSCLES = {
     {name:"Lat Pulldown", pattern:"pull", sets:3, reps:"10-12", sub:"width", tier:"prime"},
     {name:"Wide-Grip Lat Pulldown", pattern:"pull", sets:3, reps:"10-12", sub:"width", tier:"prime"},
     {name:"Neutral-Grip Pulldown", pattern:"pull", sets:3, reps:"10-12", sub:"width", tier:"prime"},
+    {name:"Standing T-Bar Row", pattern:"pull", sets:4, reps:"8-10", sub:"thickness", tier:"main"},
+    {name:"Back Hyperextension", pattern:"hinge", sets:3, reps:"12-15", sub:"thickness", tier:"prime"},
+    {name:"Assisted Pull-up Machine", pattern:"pullup", sets:3, reps:"10-12", sub:"width", tier:"prime"},
     {name:"T-Bar Row", pattern:"pull", sets:3, reps:"8-10", sub:"thickness", tier:"prime"},
     {name:"Seated Cable Row", pattern:"pull", sets:3, reps:"10-12", sub:"thickness", tier:"prime"},
     {name:"Chest-Supported Row", pattern:"pull", sets:3, reps:"10-12", sub:"thickness", tier:"prime"},
@@ -675,6 +745,7 @@ const MUSCLES = {
     {name:"Push Press", pattern:"overhead", sets:4, reps:"5-6", sub:"front", tier:"main"},
     {name:"DB Push Press", pattern:"overhead", sets:4, reps:"5-6", sub:"front", tier:"main"},
     {name:"Seated Barbell Press", pattern:"overhead", sets:4, reps:"6-8", sub:"front", tier:"main"},
+    {name:"Shoulder Press Machine", pattern:"overhead", sets:3, reps:"10-12", sub:"front", tier:"prime"},
     {name:"Clean and Press", pattern:"overhead", sets:4, reps:"5-6", sub:"front", tier:"main"},
     {name:"Behind-the-Neck Press", pattern:"overhead", sets:3, reps:"6-8", sub:"front", tier:"main"},
     {name:"Dumbbell Shoulder Press", pattern:"overhead", sets:3, reps:"8-10", sub:"front", tier:"prime"},
@@ -727,6 +798,7 @@ const MUSCLES = {
     {name:"Glute Bridge", pattern:"hipthrust", sets:3, reps:"12-15", sub:"posterior", tier:"pump"},
     {name:"Calf Raise", pattern:"calf", sets:4, reps:"15-20", tier:"pump"},
     {name:"Seated Calf Raise", pattern:"calf", sets:4, reps:"15-20", tier:"pump"},
+    {name:"Standing Calf Raise Machine", pattern:"calf", sets:4, reps:"15-20", tier:"pump"},
     {name:"Inner Thigh Machine (Adductor)", pattern:"legext", sets:3, reps:"12-15", sub:"quad", tier:"prime"},
     {name:"Outer Thigh Machine (Abductor)", pattern:"legcurl", sets:3, reps:"12-15", sub:"posterior", tier:"prime"},
     {name:"Wall Sit", pattern:"squat", sets:3, reps:"30-45s hold", sub:"quad", tier:"pump", isometric:true},
@@ -758,6 +830,7 @@ const MUSCLES = {
     {name:"Overhead Tricep Extension", pattern:"triceps", sets:3, reps:"10-12", sub:"triceps", tier:"pump"},
     {name:"Single-Arm Tricep Kickback", pattern:"triceps", sets:3, reps:"12-15/side", sub:"triceps", tier:"pump"},
     {name:"Isometric Bicep Hold", pattern:"curl", sets:3, reps:"20s hold", sub:"biceps", tier:"pump", isometric:true},
+    {name:"Tricep Extension Machine", pattern:"triceps", sets:3, reps:"12-15", sub:"triceps", tier:"pump"},
     {name:"Isometric Tricep Hold", pattern:"triceps", sets:3, reps:"20s hold", sub:"triceps", tier:"pump", isometric:true},
     {name:"Dip Bottom Hold", pattern:"dip", sets:3, reps:"15-20s hold", sub:"triceps", tier:"prime", isometric:true},
     {name:"Chin-Up Bottom Hold", pattern:"pullup", sets:3, reps:"15-20s hold", sub:"biceps", tier:"prime", isometric:true},
@@ -766,6 +839,8 @@ const MUSCLES = {
     {name:"Turkish Get-Up", pattern:"core", sets:3, reps:"5/side", tier:"main"},
     {name:"Dragon Flag", pattern:"core", sets:3, reps:"6-8", tier:"prime"},
     {name:"Landmine 180", pattern:"twist", sets:3, reps:"10/side", tier:"prime"},
+    {name:"Rotary Torso Machine", pattern:"twist", sets:3, reps:"12-15/side", tier:"pump"},
+    {name:"Crunch Machine", pattern:"crunch", sets:3, reps:"15-20", tier:"pump"},
     {name:"Toes to Bar", pattern:"legraise", sets:3, reps:"8-12", tier:"prime"},
     {name:"Hanging Leg Raise", pattern:"legraise", sets:3, reps:"10-15", tier:"prime"},
     {name:"Weighted Sit-up", pattern:"crunch", sets:3, reps:"10-12", tier:"prime"},
@@ -806,6 +881,11 @@ const WARMUP_GENERAL = {
     {name:"Dead Bug", pattern:"core", duration:"2 rounds x 10/side"},
     {name:"Plank Up-Downs", pattern:"core", duration:"2 rounds x 12 reps"},
     {name:"Bear Crawl", pattern:"core", duration:"2 rounds x 20s"},
+    {name:"Crunches", pattern:"crunch", duration:"2 rounds x 20 reps"},
+    {name:"V-Sit Ups", pattern:"crunch", duration:"2 rounds x 12 reps"},
+    {name:"Leg Raises", pattern:"legraise", duration:"2 rounds x 15 reps"},
+    {name:"Flutter Kicks", pattern:"core", duration:"2 rounds x 30s"},
+    {name:"Bicycle Crunches", pattern:"crunch", duration:"2 rounds x 20 reps"},
   ],
 };
 
@@ -919,10 +999,44 @@ const DEMO_STEPS = {
   quadstretch:["Stand tall, balance on one leg.","Pull the other heel toward your glutes.","Keep knees together, hold, then switch."],
 };
 
-const CATEGORY_EMOJI = {warmup:'⚡', mobility:'🤸', main:'🏋️', primary:'🏋️', prime:'💪', pump:'🔥', cardio:'🏃', cooldown:'🧘'};
+const CATEGORY_EMOJI = {warmup:'⚡', mobility:'🤸', main:'🏋️', primary:'🏋️', prime:'💪', pump:'🔥', core:'🎯', cardio:'🏃', cooldown:'🧘'};
 
 // illustrative body-silhouette diagram: gray base figure + pink highlight over the specific region an exercise targets
 const BODY_BASE = '<circle cx="30" cy="9" r="7" fill="var(--line)"/><rect x="27" y="15" width="6" height="4" fill="var(--line)"/><polygon points="16,19 44,19 40,50 20,50" fill="var(--line)"/><polygon points="20,50 40,50 43,59 17,59" fill="var(--line)"/><circle cx="13" cy="20" r="4.5" fill="var(--line)"/><circle cx="47" cy="20" r="4.5" fill="var(--line)"/><polygon points="10,20 18,20 16,46 11,46" fill="var(--line)"/><polygon points="42,20 50,20 49,46 44,46" fill="var(--line)"/><polygon points="19,59 29,59 26,94 20,94" fill="var(--line)"/><polygon points="31,59 41,59 40,94 34,94" fill="var(--line)"/>';
+const BODY_DETAIL =
+  // sternum line
+  '<line x1="30" y1="19" x2="30" y2="50" stroke="var(--panel)" stroke-width="0.6" stroke-opacity="0.55"/>' +
+  // pec outlines (two lobes either side of sternum)
+  '<ellipse cx="23.5" cy="25" rx="6.5" ry="5.5" fill="none" stroke="var(--panel)" stroke-width="0.6" stroke-opacity="0.5"/>' +
+  '<ellipse cx="36.5" cy="25" rx="6.5" ry="5.5" fill="none" stroke="var(--panel)" stroke-width="0.6" stroke-opacity="0.5"/>' +
+  // trap lines from neck to shoulder caps
+  '<line x1="28" y1="15.5" x2="14.5" y2="18.5" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.4"/>' +
+  '<line x1="32" y1="15.5" x2="45.5" y2="18.5" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.4"/>' +
+  // deltoid separation crescents
+  '<path d="M9.5,18.5 Q13,22.5 16.5,19.5" fill="none" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.4"/>' +
+  '<path d="M50.5,18.5 Q47,22.5 43.5,19.5" fill="none" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.4"/>' +
+  // ab grid — 3 rows x 2 columns
+  '<rect x="22.5" y="33.5" width="6.5" height="5" rx="1.4" fill="none" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.45"/>' +
+  '<rect x="31" y="33.5" width="6.5" height="5" rx="1.4" fill="none" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.45"/>' +
+  '<rect x="22.5" y="39.3" width="6.5" height="5" rx="1.4" fill="none" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.45"/>' +
+  '<rect x="31" y="39.3" width="6.5" height="5" rx="1.4" fill="none" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.45"/>' +
+  '<rect x="22.5" y="45.1" width="6.5" height="4.3" rx="1.4" fill="none" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.45"/>' +
+  '<rect x="31" y="45.1" width="6.5" height="4.3" rx="1.4" fill="none" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.45"/>' +
+  // oblique / lat taper lines
+  '<line x1="17.5" y1="29" x2="20.5" y2="49" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.35"/>' +
+  '<line x1="42.5" y1="29" x2="39.5" y2="49" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.35"/>' +
+  // bicep/tricep crease (elbow line)
+  '<line x1="10.3" y1="33" x2="17.2" y2="33" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.4"/>' +
+  '<line x1="42.8" y1="33" x2="49.7" y2="33" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.4"/>' +
+  // forearm taper hint
+  '<line x1="11.2" y1="40" x2="16.3" y2="40" stroke="var(--panel)" stroke-width="0.45" stroke-opacity="0.3"/>' +
+  '<line x1="43.7" y1="40" x2="48.8" y2="40" stroke="var(--panel)" stroke-width="0.45" stroke-opacity="0.3"/>' +
+  // quad/knee crease
+  '<line x1="19.5" y1="76" x2="28.5" y2="76" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.4"/>' +
+  '<line x1="31.5" y1="76" x2="40.5" y2="76" stroke="var(--panel)" stroke-width="0.5" stroke-opacity="0.4"/>' +
+  // quad center definition line
+  '<line x1="24" y1="61" x2="22.5" y2="75" stroke="var(--panel)" stroke-width="0.45" stroke-opacity="0.3"/>' +
+  '<line x1="36" y1="61" x2="37.5" y2="75" stroke="var(--panel)" stroke-width="0.45" stroke-opacity="0.3"/>';
 
 function muscleHighlightRegion(muscle, sub, pattern){
   if(muscle === 'chest'){
@@ -951,9 +1065,10 @@ function muscleHighlightRegion(muscle, sub, pattern){
   return '';
 }
 function muscleDiagramSVG(muscle, sub, pattern){
-  const region = muscleHighlightRegion(muscle, sub, pattern);
+  let region = muscleHighlightRegion(muscle, sub, pattern);
   if(!region) return '';
-  return `<svg viewBox="0 0 60 98">${BODY_BASE}${region}</svg>`;
+  region = region.split('fill="var(--pink)"').join('fill="var(--pink)" stroke="var(--pink-ink)" stroke-width="0.7" stroke-opacity="0.55"');
+  return `<svg viewBox="0 0 60 98">${BODY_BASE}${region}${BODY_DETAIL}</svg>`;
 }
 function getSpecificMuscleLabel(muscle, sub, pattern){
   if(pattern === 'calf') return 'Calves';
@@ -1105,7 +1220,7 @@ const DUR_CONFIG = {
   75:{warmup:4, primary:2, prime:2, pump:3, cardio:1, cooldown:3},
   90:{warmup:4, primary:2, prime:2, pump:3, cardio:2, cooldown:3},
 };
-const CATEGORY_LABEL = {warmup:"Core & Cardio", mobility:"Mobility Drills", primary:"Main Party", prime:"After Party", pump:"Hangover", main:"Workout", cardio:"Cardio", cooldown:"Cool-down"};
+const CATEGORY_LABEL = {warmup:"Core & Cardio", mobility:"Mobility Drills", primary:"Main Party", prime:"After Party", pump:"Hangover", core:"Core Finisher", main:"Workout", cardio:"Cardio", cooldown:"Cool-down"};
 
 const ROUND_FORMATS = {
   straight:{label:"Straight Sets", hint:"Classic sets & reps, logged individually."},
@@ -1151,11 +1266,11 @@ const ROUND_EXERCISES = {
     {name:"Butterfly Sit-ups", pattern:"crunch", reps:"15", muscle:"core"},
     {name:"Sit-ups", pattern:"crunch", reps:"15", muscle:"core"},
     {name:"4-Point Hold", pattern:"core", reps:"30s", muscle:"core", isometric:true},
-    {name:"Burpees", pattern:"cardio", reps:"12", combo:true},
-    {name:"Burpee to Push-up", pattern:"cardio", reps:"10", combo:true},
-    {name:"Squat Thrusts", pattern:"cardio", reps:"15", combo:true},
-    {name:"Jumping Lunge to Twist", pattern:"lunge", reps:"10/leg", combo:true},
-    {name:"Bear Crawl to Push-up", pattern:"core", reps:"8", combo:true},
+    {name:"Burpees", pattern:"cardio", reps:"12", combo:true, muscle:"legs"},
+    {name:"Burpee to Push-up", pattern:"cardio", reps:"10", combo:true, muscle:"legs"},
+    {name:"Squat Thrusts", pattern:"cardio", reps:"15", combo:true, muscle:"legs"},
+    {name:"Jumping Lunge to Twist", pattern:"lunge", reps:"10/leg", combo:true, muscle:"legs"},
+    {name:"Bear Crawl to Push-up", pattern:"core", reps:"8", combo:true, muscle:"shoulders"},
     {name:"Isometric Push-up Hold", pattern:"pushup", reps:"15-20s hold", muscle:"chest", sub:"flat", isometric:true},
     {name:"Superman Hold", pattern:"hinge", reps:"20-30s hold", muscle:"back", sub:"thickness", isometric:true},
     {name:"Squat Bottom Hold", pattern:"squat", reps:"20-30s hold", muscle:"legs", sub:"quad", isometric:true},
@@ -1163,11 +1278,11 @@ const ROUND_EXERCISES = {
     {name:"Reverse Plank Hold", pattern:"core", reps:"20-30s hold", muscle:"core", isometric:true},
     {name:"Boat Pose Hold", pattern:"core", reps:"20-30s hold", muscle:"core", isometric:true},
     {name:"Wall Handstand Hold", pattern:"overhead", reps:"10-20s hold", muscle:"shoulders", sub:"front", isometric:true},
-    {name:"Squat Jump to Reach", pattern:"squat", reps:"12", combo:true},
-    {name:"Box Jump", pattern:"squat", reps:"10", combo:true},
-    {name:"Broad Jump to Sprint", pattern:"cardio", reps:"8", combo:true},
-    {name:"Plyo Push-up", pattern:"pushup", reps:"8", combo:true},
-    {name:"Bodyweight Turkish Get-Up", pattern:"core", reps:"5/side", combo:true},
+    {name:"Squat Jump to Reach", pattern:"squat", reps:"12", combo:true, muscle:"legs"},
+    {name:"Box Jump", pattern:"squat", reps:"10", combo:true, muscle:"legs"},
+    {name:"Broad Jump to Sprint", pattern:"cardio", reps:"8", combo:true, muscle:"legs"},
+    {name:"Plyo Push-up", pattern:"pushup", reps:"8", combo:true, muscle:"chest"},
+    {name:"Bodyweight Turkish Get-Up", pattern:"core", reps:"5/side", combo:true, muscle:"shoulders"},
   ],
   dumbbell:[
     {name:"Split Squat", pattern:"lunge", reps:"10/leg", muscle:"legs", sub:"quad"},
@@ -1189,18 +1304,18 @@ const ROUND_EXERCISES = {
     {name:"DB RDL", pattern:"hinge", reps:"10", muscle:"legs", sub:"posterior"},
     {name:"Glute Bridge (2s hold)", pattern:"hipthrust", reps:"12", muscle:"legs", sub:"posterior"},
     {name:"Standing Calf Raises", pattern:"calf", reps:"15", muscle:"legs"},
-    {name:"DB Thrusters", pattern:"squat", reps:"10", combo:true},
-    {name:"Man Makers", pattern:"pull", reps:"8", combo:true},
-    {name:"Devil Press", pattern:"squat", reps:"8", combo:true},
-    {name:"Renegade Row to Push-up", pattern:"pull", reps:"8/side", combo:true},
-    {name:"DB Squat to Press", pattern:"squat", reps:"10", combo:true},
-    {name:"DB Lunge to Overhead Press", pattern:"lunge", reps:"8/leg", combo:true},
-    {name:"DB Clean and Press", pattern:"hinge", reps:"8", combo:true},
-    {name:"DB Snatch", pattern:"hinge", reps:"8/side", combo:true},
-    {name:"DB Clean", pattern:"hinge", reps:"8", combo:true},
-    {name:"Farmer's Carry", pattern:"hinge", reps:"30s", combo:true},
-    {name:"Suitcase Carry", pattern:"hinge", reps:"30s/side", combo:true},
-    {name:"DB Turkish Get-Up", pattern:"core", reps:"5/side", combo:true},
+    {name:"DB Thrusters", pattern:"squat", reps:"10", combo:true, muscle:"legs"},
+    {name:"Man Makers", pattern:"pull", reps:"8", combo:true, muscle:"back"},
+    {name:"Devil Press", pattern:"squat", reps:"8", combo:true, muscle:"legs"},
+    {name:"Renegade Row to Push-up", pattern:"pull", reps:"8/side", combo:true, muscle:"back"},
+    {name:"DB Squat to Press", pattern:"squat", reps:"10", combo:true, muscle:"legs"},
+    {name:"DB Lunge to Overhead Press", pattern:"lunge", reps:"8/leg", combo:true, muscle:"legs"},
+    {name:"DB Clean and Press", pattern:"hinge", reps:"8", combo:true, muscle:"back"},
+    {name:"DB Snatch", pattern:"hinge", reps:"8/side", combo:true, muscle:"back"},
+    {name:"DB Clean", pattern:"hinge", reps:"8", combo:true, muscle:"back"},
+    {name:"Farmer's Carry", pattern:"hinge", reps:"30s", combo:true, muscle:"back"},
+    {name:"Suitcase Carry", pattern:"hinge", reps:"30s/side", combo:true, muscle:"back"},
+    {name:"DB Turkish Get-Up", pattern:"core", reps:"5/side", combo:true, muscle:"shoulders"},
     {name:"DB Chest Squeeze Hold", pattern:"press", reps:"15-20s hold", muscle:"chest", sub:"flat", isometric:true},
     {name:"DB Row Hold", pattern:"pull", reps:"15-20s hold", muscle:"back", sub:"thickness", isometric:true},
     {name:"DB Curl Hold", pattern:"curl", reps:"15-20s hold", muscle:"arms", sub:"biceps", isometric:true},
@@ -1218,11 +1333,12 @@ let state = {
   weekPlan:{},
   focusOverride:false,
   focusVariantOverride:null,
-  collapsed:{warmup:true, mobility:true, main:false, primary:false, prime:true, pump:true, cardio:true, cooldown:true},
+  collapsed:{warmup:true, mobility:true, main:false, primary:false, prime:true, pump:true, core:true, cardio:true, cooldown:true},
   rest:{active:false, seconds:0, total:0, handle:null},
   roundTimer:{active:false, seconds:0, phase:'on', currentIndex:0, currentRound:1, roundsCompleted:0, intervalsCompleted:0, handle:null},
   historyCache:[],
   stopwatch:{seconds:0, running:false, handle:null},
+  overcrowdMode:false,
   autosaveHandle:null,
 };
 
@@ -1341,6 +1457,13 @@ const splitChips = document.getElementById('splitChips');
 const dayChips = document.getElementById('dayChips');
 const planLine = document.getElementById('planLine');
 const durRow = document.getElementById('durRow');
+const overcrowdToggle = document.getElementById('overcrowdToggle');
+const overcrowdCheck = document.getElementById('overcrowdCheck');
+overcrowdToggle.onclick = ()=>{
+  state.overcrowdMode = !state.overcrowdMode;
+  overcrowdToggle.classList.toggle('active', state.overcrowdMode);
+  overcrowdCheck.textContent = state.overcrowdMode ? '✓' : '';
+};
 const generateBtn = document.getElementById('generateBtn');
 
 Object.keys(SPLITS).forEach(key=>{
@@ -1552,6 +1675,13 @@ function renderFocusVariantChips(day){
 function selectDuration(min){
   state.duration = min;
   [...durRow.children].forEach(c=>c.classList.toggle('selected', parseInt(c.dataset.dur)===min));
+  const eligible = min >= 45;
+  overcrowdToggle.style.display = eligible ? 'flex' : 'none';
+  if(!eligible && state.overcrowdMode){
+    state.overcrowdMode = false;
+    overcrowdToggle.classList.remove('active');
+    overcrowdCheck.textContent = '';
+  }
 }
 function dayName(d){
   const map = {chest:"Chest",back:"Back",shoulders:"Shoulders",legs:"Legs",arms:"Arms",push:"Push",pull:"Pull",upper:"Upper",lower:"Lower",full:"Full Body",badminton:"Badminton",light:"Light Activity"};
@@ -1613,14 +1743,33 @@ function tierPool(muscles, focus, tier, applySubFilter, exclude){
 const COMPOUND_PATTERNS = new Set(['press','incline','dip','pushup','overhead','pull','pullup','squat','hinge','lunge','legpress','hipthrust']);
 function isCompoundPattern(pattern){ return COMPOUND_PATTERNS.has(pattern); }
 
-function pickFromTier(muscles, focus, tier, count, exclude, preferCompound){
-  let pool = tierPool(muscles, focus, tier, true, exclude);
-  if(preferCompound){
-    pool = [...shuffledArr(pool.filter(e=>isCompoundPattern(e.pattern))), ...shuffledArr(pool.filter(e=>!isCompoundPattern(e.pattern)))];
-  } else {
-    pool = shuffledArr(pool);
+function pickFromTier(muscles, focus, tier, count, exclude, preferCompound, rotateOffset){
+  rotateOffset = rotateOffset || 0;
+  const orderedMuscles = muscles.length ? [...muscles.slice(rotateOffset % muscles.length), ...muscles.slice(0, rotateOffset % muscles.length)] : muscles;
+  const perMuscle = {};
+  orderedMuscles.forEach(m=>{
+    let mPool = tierPool([m], focus, tier, true, exclude);
+    if(preferCompound){
+      mPool = [...shuffledArr(mPool.filter(e=>isCompoundPattern(e.pattern))), ...shuffledArr(mPool.filter(e=>!isCompoundPattern(e.pattern)))];
+    } else {
+      mPool = shuffledArr(mPool);
+    }
+    perMuscle[m] = mPool;
+  });
+  let picked = [];
+  let round = 0;
+  while(picked.length < count){
+    let addedThisRound = false;
+    for(const m of orderedMuscles){
+      if(picked.length >= count) break;
+      if(perMuscle[m] && perMuscle[m][round] && !picked.some(p=>p.name===perMuscle[m][round].name)){
+        picked.push(perMuscle[m][round]);
+        addedThisRound = true;
+      }
+    }
+    if(!addedThisRound) break;
+    round++;
   }
-  let picked = pool.slice(0, count);
   if(picked.length < count){
     const relaxed = shuffledArr(tierPool(muscles, focus, tier, false, exclude)).filter(e=>!picked.some(p=>p.name===e.name));
     picked = picked.concat(relaxed).slice(0, count);
@@ -1628,7 +1777,7 @@ function pickFromTier(muscles, focus, tier, count, exclude, preferCompound){
   return picked;
 }
 function pickTieredExercises(day, counts, duration){
-  const preferCompound = duration && duration < 45;
+  const preferCompound = (duration && duration < 45) || state.overcrowdMode;
   const {muscles, focus} = getFocusMuscles(day);
   const exclude = new Set();
   let primary = [];
@@ -1636,12 +1785,36 @@ function pickTieredExercises(day, counts, duration){
     const priPool = shuffledArr(tierPool([focus.priorityMuscle], focus, 'main', true, exclude));
     if(priPool.length){ primary.push(priPool[0]); exclude.add(priPool[0].name); }
   }
-  primary = primary.concat(pickFromTier(muscles, focus, 'main', counts.primary - primary.length, exclude, preferCompound));
+  primary = primary.concat(pickFromTier(muscles, focus, 'main', counts.primary - primary.length, exclude, preferCompound, 0));
   primary.forEach(e=>exclude.add(e.name));
-  let prime = pickFromTier(muscles, focus, 'prime', counts.prime, exclude, preferCompound);
+  let prime = pickFromTier(muscles, focus, 'prime', counts.prime, exclude, preferCompound, 1);
   prime.forEach(e=>exclude.add(e.name));
-  let pump = pickFromTier(muscles, focus, 'pump', counts.pump, exclude, false);
-  const all = [...primary, ...prime, ...pump];
+  let pump = pickFromTier(muscles, focus, 'pump', counts.pump, exclude, false, 2);
+  let all = [...primary, ...prime, ...pump];
+
+  // guarantee every target muscle gets at least one exercise somewhere in the session —
+  // a flat/unweighted pick can otherwise starve whichever muscle has fewer pool entries (e.g. arms vs chest)
+  muscles.forEach(m=>{
+    if(all.some(e=>e.muscle===m)) return;
+    const usedNames = new Set(all.map(e=>e.name));
+    let candidates = (MUSCLES[m].exercises||[]).filter(ex=>!usedNames.has(ex.name)).map(ex=>({...ex, muscle:m}));
+    const subFiltered = candidates.filter(ex=>!(focus && focus.subMap && focus.subMap[m] && ex.sub && ex.sub !== focus.subMap[m]));
+    const chosen = shuffledArr(subFiltered.length ? subFiltered : candidates)[0];
+    if(!chosen) return;
+    const muscleCounts = {};
+    all.forEach(e=>{ muscleCounts[e.muscle] = (muscleCounts[e.muscle]||0)+1; });
+    const trySafeReplace = arr => {
+      for(let i=arr.length-1; i>=0; i--){
+        if(muscleCounts[arr[i].muscle] > 1){ arr[i] = chosen; return true; }
+      }
+      return false;
+    };
+    if(!(pump.length && trySafeReplace(pump)) && !(prime.length && trySafeReplace(prime)) && !(primary.length && trySafeReplace(primary))){
+      pump = [...pump, chosen]; // no safe slot existed — append rather than risk dropping another muscle's only coverage
+    }
+    all = [...primary, ...prime, ...pump];
+  });
+
   if(!all.some(e=>e.isometric)){
     const usedNames = new Set(all.map(e=>e.name));
     let isoPool = [];
@@ -1657,18 +1830,28 @@ function pickTieredExercises(day, counts, duration){
     const fallback = shuffledArr(isoPool.filter(e=>!e.matchesSub));
     const chosen = (preferred[0] || fallback[0]);
     if(chosen){
-      if(pump.length){ pump = [...pump.slice(0,-1), chosen]; }
-      else if(prime.length){ prime = [...prime.slice(0,-1), chosen]; }
-      else { pump = [...pump, chosen]; }
+      const muscleCounts = {};
+      all.forEach(e=>{ muscleCounts[e.muscle] = (muscleCounts[e.muscle]||0)+1; });
+      const trySafeReplace = arr => {
+        for(let i=arr.length-1; i>=0; i--){
+          if(muscleCounts[arr[i].muscle] > 1){ arr[i] = chosen; return true; }
+        }
+        return false;
+      };
+      if(!(pump.length && trySafeReplace(pump)) && !(prime.length && trySafeReplace(prime)) && !(primary.length && trySafeReplace(primary))){
+        // no slot was safe to swap (every muscle is a sole representative) — append rather than risk undoing coverage
+        pump = [...pump, chosen];
+      }
     }
   }
   return {primary, prime, pump};
 }
-function pickRoundExercises(day, equipment, count, duration){
+function pickRoundExercises(day, equipment, count, duration, excludeNames){
   const focus = getFocusForDay(day);
   let muscles = COMPOSITE[day] || [day];
   if(focus && focus.musclesOverride) muscles = focus.musclesOverride;
-  const pool = ROUND_EXERCISES[equipment] || ROUND_EXERCISES.bodyweight;
+  const exclude = excludeNames || new Set();
+  const pool = (ROUND_EXERCISES[equipment] || ROUND_EXERCISES.bodyweight).filter(e=>!exclude.has(e.name));
 
   function shuffled(arr){
     arr = [...arr];
@@ -1676,7 +1859,7 @@ function pickRoundExercises(day, equipment, count, duration){
     return arr;
   }
   function matches(ex, applySubFilter){
-    if(!ex.muscle) return true; // generic conditioning move (sprawls, high knees, etc) — always eligible
+    if(!ex.muscle || ex.muscle === 'core') return true; // generic conditioning moves and core work — appropriate for any focus
     if(!muscles.includes(ex.muscle)) return false;
     if(applySubFilter && focus && focus.subMap && focus.subMap[ex.muscle] && ex.sub && ex.sub !== focus.subMap[ex.muscle]) return false;
     return true;
@@ -1684,7 +1867,7 @@ function pickRoundExercises(day, equipment, count, duration){
 
   let picked = [];
   // for shorter sessions, prioritize efficient combo/compound movements to get the most out of limited time
-  if(duration && duration < 45){
+  if((duration && duration < 45) || state.overcrowdMode){
     const comboMatches = shuffled(pool.filter(e=>e.combo && matches(e, true)));
     picked = comboMatches.slice(0, Math.min(count, Math.ceil(count/2)+1));
   }
@@ -1732,11 +1915,25 @@ function pickWarmupBlock(day, includeSpecific){
   if(!includeSpecific) return general;
   const {muscles} = getFocusMuscles(day);
   let specificPool = [];
-  muscles.forEach(m=>{ (WARMUP_SPECIFIC[m]||[]).forEach(w=> specificPool.push({...w, muscle:m})); });
+  const seenNames = new Set();
+  muscles.forEach(m=>{
+    (WARMUP_SPECIFIC[m]||[]).forEach(w=>{
+      if(seenNames.has(w.name)) return;
+      seenNames.add(w.name);
+      specificPool.push({...w, muscle:m});
+    });
+  });
   const usedNames = general.map(g=>g.name);
   specificPool = specificPool.filter(w=>!usedNames.some(n=>n===w.name));
   const specific = shuffledArr(specificPool).slice(0,2).map(e=>({...e, category:'mobility'}));
   return [...general, ...specific];
+}
+
+function pickCoreFinisher(duration, excludeNames){
+  const count = duration >= 50 ? 2 : 1;
+  const exclude = excludeNames || new Set();
+  const pool = shuffledArr(MUSCLES.core.exercises.filter(e=>!exclude.has(e.name)).map(e=>({...e, muscle:'core'})));
+  return pool.slice(0, count);
 }
 
 function buildSession(){
@@ -1758,21 +1955,26 @@ function buildSession(){
   }
 
   const warmups = pickWarmupBlock(day, true);
+  const mkSets = e => ({...e, sets: Array.from({length:e.sets}, ()=>({weight:'', reps:'', done:false}))});
+  const warmupNames = new Set(warmups.map(w=>w.name));
 
   if(state.format === 'amrap' || state.format === 'emom' || state.format === 'interval'){
-    const roundEx = pickRoundExercises(day, state.equipment, 4, state.duration).map(e=>({...e, category:'main'}));
+    const roundEx = pickRoundExercises(day, state.equipment, 4, state.duration, warmupNames).map(e=>({...e, category:'main'}));
+    const usedSoFar = new Set([...warmupNames, ...roundEx.map(e=>e.name)]);
+    const coreFinisher = pickCoreFinisher(state.duration, usedSoFar).map(e=>({...mkSets(e), category:'core'}));
     const cooldown = pickCooldownForDay(day, cfg.cooldown).map(e=>({...e, category:'cooldown'}));
-    return [...warmups, ...roundEx, ...cooldown];
+    return [...warmups, ...roundEx, ...coreFinisher, ...cooldown];
   }
 
   const tiered = pickTieredExercises(day, cfg, state.duration);
-  const mkSets = e => ({...e, sets: Array.from({length:e.sets}, ()=>({weight:'', reps:'', done:false}))});
   const primary = tiered.primary.map(e=>({...mkSets(e), category:'primary'}));
   const prime = tiered.prime.map(e=>({...mkSets(e), category:'prime'}));
   const pump = tiered.pump.map(e=>({...mkSets(e), category:'pump'}));
-  const cardio = pickRandom(CARDIO, cfg.cardio).map(e=>({...e, category:'cardio'}));
+  const usedSoFar = new Set([...warmupNames, ...primary.map(e=>e.name), ...prime.map(e=>e.name), ...pump.map(e=>e.name)]);
+  const coreFinisher = pickCoreFinisher(state.duration, usedSoFar).map(e=>({...mkSets(e), category:'core'}));
+  const cardio = pickRandom(CARDIO, cfg.cardio, [...warmupNames]).map(e=>({...e, category:'cardio'}));
   const cooldown = pickCooldownForDay(day, cfg.cooldown).map(e=>({...e, category:'cooldown'}));
-  return [...warmups, ...primary, ...prime, ...pump, ...cardio, ...cooldown];
+  return [...warmups, ...primary, ...prime, ...pump, ...coreFinisher, ...cardio, ...cooldown];
 }
 
 generateBtn.onclick = ()=>{
@@ -1799,7 +2001,7 @@ generateBtn.onclick = ()=>{
   };
   state.collapsed = (state.day==='badminton' || state.day==='light')
     ? {warmup:true, main:true, cardio:false, cooldown:true}
-    : {warmup:true, mobility:true, main:false, primary:false, prime:true, pump:true, cardio:true, cooldown:true};
+    : {warmup:true, mobility:true, main:false, primary:false, prime:true, pump:true, core:true, cardio:true, cooldown:true};
   document.getElementById('setupCard').style.display = 'none';
   document.getElementById('sessionArea').style.display = 'block';
   document.getElementById('finishBar').style.display = 'block';
@@ -1840,7 +2042,7 @@ function estimateCategoryMinutes(category, items){
     }
     return Math.round(items.reduce((sum,ex)=> sum + (ex.sets ? ex.sets.length : 3)*1.5, 0));
   }
-  if(category==='primary' || category==='prime' || category==='pump'){
+  if(category==='primary' || category==='prime' || category==='pump' || category==='core'){
     return Math.round(items.reduce((sum,ex)=> sum + (ex.sets ? ex.sets.length : 3)*1.5, 0));
   }
   if(category==='cardio'){
@@ -1857,7 +2059,7 @@ async function renderExerciseList(){
   list.innerHTML = '';
   const format = state.session.format || 'straight';
   const isRoundFormat = format === 'amrap' || format === 'emom' || format === 'interval';
-  const categories = ['warmup','mobility','main','primary','prime','pump','cardio','cooldown'];
+  const categories = ['warmup','mobility','main','primary','prime','pump','core','cardio','cooldown'];
   for(const cat of categories){
     const items = state.session.exercises.map((e,i)=>({...e, _idx:i})).filter(e=>e.category===cat);
     if(!items.length) continue;
@@ -1897,7 +2099,7 @@ async function renderExerciseList(){
       const card = document.createElement('div');
       card.className = 'ex-card';
 
-      if(cat === 'main' || cat === 'primary' || cat === 'prime' || cat === 'pump'){
+      if(cat === 'main' || cat === 'primary' || cat === 'prime' || cat === 'pump' || cat === 'core'){
         const best = await getBest(ex.name);
         card.innerHTML = `
           <div class="ex-head">
@@ -2053,6 +2255,11 @@ function addExerciseToCategory(cat){
     const picks = shuffledArr(pool);
     if(!picks.length){ showToast("No more exercises to add here 🤷"); return; }
     pick = {...picks[0], category:cat, sets: Array.from({length:picks[0].sets}, ()=>({weight:'', reps:'', done:false}))};
+  } else if(cat === 'core'){
+    const pool = MUSCLES.core.exercises.map(e=>({...e, muscle:'core'}));
+    const picks = pickRandom(pool, 1, usedNames);
+    if(!picks.length){ showToast("No more exercises to add here 🤷"); return; }
+    pick = {...picks[0], category:'core', sets: Array.from({length:picks[0].sets}, ()=>({weight:'', reps:'', done:false}))};
   } else {
     const pool = cat==='warmup' ? getWarmupPoolForDay(state.day, 'general') : cat==='mobility' ? getWarmupPoolForDay(state.day, 'specific') : cat==='cardio' ? CARDIO : pickCooldownForDay(state.day, COOLDOWN.length);
     const picks = pickRandom(pool, 1, usedNames);
@@ -2063,7 +2270,7 @@ function addExerciseToCategory(cat){
   let lastIdx = -1;
   state.session.exercises.forEach((e,i)=>{ if(e.category===cat) lastIdx = i; });
   if(lastIdx === -1){
-    const order = ['warmup','mobility','main','primary','prime','pump','cardio','cooldown'];
+    const order = ['warmup','mobility','main','primary','prime','pump','core','cardio','cooldown'];
     const catPos = order.indexOf(cat);
     lastIdx = state.session.exercises.length - 1;
     for(let i=state.session.exercises.length-1;i>=0;i--){
@@ -2305,7 +2512,7 @@ function swapExercise(idx){
   const ex = state.session.exercises[idx];
   const usedNames = state.session.exercises.map(e=>e.name);
   const isRoundMain = ex.category === 'main' && state.session && ['amrap','emom','interval'].includes(state.session.format);
-  const isTiered = ex.category === 'primary' || ex.category === 'prime' || ex.category === 'pump';
+  const isTiered = ex.category === 'primary' || ex.category === 'prime' || ex.category === 'pump' || ex.category === 'core';
   let pool;
   if(isRoundMain){
     const equipPool = ROUND_EXERCISES[state.session.equipment] || ROUND_EXERCISES.bodyweight;
@@ -2339,7 +2546,7 @@ const swapOverlay = document.getElementById('swapOverlay');
 function openSwapPicker(idx, ex, options){
   document.getElementById('swapPickerTitle').textContent = `Swap ${ex.name}`;
   const isMain = ex.category === 'main' || ex.category === 'primary' || ex.category === 'prime' || ex.category === 'pump';
-  const isTiered = ex.category === 'primary' || ex.category === 'prime' || ex.category === 'pump';
+  const isTiered = ex.category === 'primary' || ex.category === 'prime' || ex.category === 'pump' || ex.category === 'core';
   document.getElementById('swapPickerSub').textContent = isTiered
     ? `Any tier — Main Party, After Party, or Hangover — for ${MUSCLES[ex.muscle]?MUSCLES[ex.muscle].label:ex.muscle}`
     : isMain
@@ -2369,7 +2576,7 @@ document.getElementById('swapPickerCancel').onclick = ()=>{ swapOverlay.classLis
 
 function applySwap(idx, ex, candidate){
   const isRoundMain = ex.category === 'main' && state.session && ['amrap','emom','interval'].includes(state.session.format);
-  const isTiered = ex.category === 'primary' || ex.category === 'prime' || ex.category === 'pump';
+  const isTiered = ex.category === 'primary' || ex.category === 'prime' || ex.category === 'pump' || ex.category === 'core';
   let newEx;
   if(isRoundMain){
     newEx = {...candidate, category:'main'};
@@ -2407,6 +2614,10 @@ function getNextUpItem(){
   return null;
 }
 
+const restSliderBar = document.getElementById('restSliderBar');
+const restSliderFill = document.getElementById('restSliderFill');
+const restSliderNum = document.getElementById('restSliderNum');
+const restSliderLabel = document.getElementById('restSliderLabel');
 function startRest(pattern, exName){
   clearInterval(state.rest.handle);
   const total = REST_SECONDS[pattern] || 60;
@@ -2414,6 +2625,8 @@ function startRest(pattern, exName){
   restExName.textContent = `After ${exName}`;
   renderRestNext();
   restOverlay.classList.add('show');
+  restSliderBar.classList.add('show');
+  restSliderLabel.textContent = `Resting — ${exName}`;
   updateRestNum();
   state.rest.handle = setInterval(()=>{
     state.rest.seconds--;
@@ -2421,7 +2634,12 @@ function startRest(pattern, exName){
     if(state.rest.seconds <= 0){ playBeep('done'); endRest(); }
   }, 1000);
 }
-function updateRestNum(){ restNum.textContent = Math.max(0, state.rest.seconds); }
+function updateRestNum(){
+  restNum.textContent = Math.max(0, state.rest.seconds);
+  restSliderNum.textContent = fmtMMSS(Math.max(0, state.rest.seconds));
+  const pct = state.rest.total ? Math.max(0, state.rest.seconds) / state.rest.total * 100 : 0;
+  restSliderFill.style.width = pct + '%';
+}
 function renderRestNext(){
   const next = getNextUpItem();
   if(next){
@@ -2436,6 +2654,7 @@ function endRest(){
   clearInterval(state.rest.handle);
   state.rest.active = false;
   restOverlay.classList.remove('show');
+  restSliderBar.classList.remove('show');
 }
 document.getElementById('skipRestBtn').onclick = endRest;
 document.getElementById('restClose').onclick = endRest;
@@ -2511,6 +2730,9 @@ document.getElementById('finishBtn').onclick = async ()=>{
   document.getElementById('sessionArea').style.display = 'none';
   document.getElementById('finishBar').style.display = 'none';
   if(state.split){ computeWeekPlan(); renderDateStrip(); refreshFocusReadout(); }
+  state.overcrowdMode = false;
+  overcrowdToggle.classList.remove('active');
+  overcrowdCheck.textContent = '';
 };
 
 function showToast(msg){
@@ -2545,12 +2767,73 @@ document.getElementById('celebrateDoneBtn').onclick = ()=>{ celebrateOverlay.cla
 
 // ---------- SETTINGS ----------
 const settingsOverlay = document.getElementById('settingsOverlay');
-// ---------- STOPWATCH ----------
+// ---------- TIMER / STOPWATCH ----------
 const stopwatchOverlay = document.getElementById('stopwatchOverlay');
+const twTabTimer = document.getElementById('twTabTimer');
+const twTabStopwatch = document.getElementById('twTabStopwatch');
+const twTimerPane = document.getElementById('twTimerPane');
+const twStopwatchPane = document.getElementById('twStopwatchPane');
+const restOverlayTitle = stopwatchOverlay.querySelector('.rest-title');
+
+document.getElementById('stopwatchBtn').onclick = ()=>{ stopwatchOverlay.classList.add('show'); updateStopwatchDisplay(); updateCountdownDisplay(); };
+document.getElementById('stopwatchClose').onclick = ()=>{ stopwatchOverlay.classList.remove('show'); };
+twTabTimer.onclick = ()=>{
+  twTabTimer.classList.add('active'); twTabStopwatch.classList.remove('active');
+  twTimerPane.style.display = 'flex'; twStopwatchPane.style.display = 'none';
+  restOverlayTitle.textContent = 'Timer';
+};
+twTabStopwatch.onclick = ()=>{
+  twTabStopwatch.classList.add('active'); twTabTimer.classList.remove('active');
+  twStopwatchPane.style.display = 'flex'; twTimerPane.style.display = 'none';
+  restOverlayTitle.textContent = 'Stopwatch';
+};
+
+// --- Countdown Timer ---
+state.countdown = {total:60, remaining:60, running:false, handle:null};
+const countdownNum = document.getElementById('countdownNum');
+const countdownToggle = document.getElementById('countdownToggle');
+document.querySelectorAll('.tw-preset').forEach(chip=>{
+  chip.onclick = ()=>{
+    if(state.countdown.running) return;
+    document.querySelectorAll('.tw-preset').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    const secs = parseInt(chip.dataset.secs);
+    state.countdown.total = secs; state.countdown.remaining = secs;
+    updateCountdownDisplay();
+  };
+});
+document.getElementById('countdownReset').onclick = ()=>{
+  clearInterval(state.countdown.handle);
+  state.countdown.running = false; state.countdown.remaining = state.countdown.total;
+  countdownToggle.textContent = 'Start'; countdownToggle.classList.remove('stop');
+  updateCountdownDisplay();
+};
+countdownToggle.onclick = ()=>{
+  if(state.countdown.remaining <= 0) return;
+  state.countdown.running = !state.countdown.running;
+  countdownToggle.textContent = state.countdown.running ? 'Pause' : 'Start';
+  countdownToggle.classList.toggle('stop', state.countdown.running);
+  if(state.countdown.running){
+    state.countdown.handle = setInterval(()=>{
+      state.countdown.remaining--;
+      updateCountdownDisplay();
+      if(state.countdown.remaining <= 0){
+        clearInterval(state.countdown.handle);
+        state.countdown.running = false;
+        countdownToggle.textContent = 'Start'; countdownToggle.classList.remove('stop');
+        playBeep('done');
+        showToast("Timer's up! ⏱️");
+      }
+    }, 1000);
+  } else {
+    clearInterval(state.countdown.handle);
+  }
+};
+function updateCountdownDisplay(){ countdownNum.textContent = fmtMMSS(Math.max(0, state.countdown.remaining)); }
+
+// --- Stopwatch ---
 const stopwatchNum = document.getElementById('stopwatchNum');
 const stopwatchToggle = document.getElementById('stopwatchToggle');
-document.getElementById('stopwatchBtn').onclick = ()=>{ stopwatchOverlay.classList.add('show'); updateStopwatchDisplay(); };
-document.getElementById('stopwatchClose').onclick = ()=>{ stopwatchOverlay.classList.remove('show'); };
 document.getElementById('stopwatchReset').onclick = ()=>{
   clearInterval(state.stopwatch.handle);
   state.stopwatch = {seconds:0, running:false, handle:null};
