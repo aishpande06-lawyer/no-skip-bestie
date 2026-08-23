@@ -128,6 +128,42 @@
   .overcrowd-toggle.active .overcrowd-check{background:var(--pink); border-color:var(--pink);}
   .overcrowd-title{font-size:13px; font-weight:700;}
   .overcrowd-sub{font-size:11px; color:var(--muted); margin-top:2px;}
+  .cycle-toggle-row{
+    display:flex; align-items:center; gap:12px; background:var(--panel-2); border:1px solid var(--line);
+    border-radius:12px; padding:12px 14px; cursor:pointer;
+  }
+  .cycle-toggle-row.active{background:var(--pink-dim); border-color:var(--pink);}
+  .cycle-toggle-row.active .overcrowd-check{background:var(--pink); border-color:var(--pink);}
+  .cycle-input{
+    width:70px; text-align:center; font-family:'JetBrains Mono'; font-size:14px; font-weight:700;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:6px 4px; color:var(--chalk);
+  }
+  .cycle-status{margin-top:10px;}
+  .cycle-card{
+    background:linear-gradient(135deg, var(--pink-dim), var(--panel-2)); border:1px solid var(--pink);
+    border-radius:16px; padding:16px;
+  }
+  .cycle-card-top{display:flex; align-items:center; gap:14px; margin-bottom:12px;}
+  .cycle-day-badge{
+    width:52px; height:58px; border-radius:14px; flex:none; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; color:#fff;
+  }
+  .cycle-day-num{font-family:'Fredoka'; font-size:22px; font-weight:700; line-height:1;}
+  .cycle-day-lbl{font-size:9px; letter-spacing:0.06em; margin-top:2px; opacity:0.9;}
+  .cycle-card-phase{font-size:16px; font-weight:700; font-family:'Fredoka';}
+  .cycle-card-sub{font-size:11.5px; color:var(--muted); margin-top:2px;}
+  .cycle-dot-row{display:flex; gap:2.5px; margin-bottom:10px; flex-wrap:wrap;}
+  .cycle-dot{width:7px; height:7px; border-radius:50%; opacity:0.45;}
+  .cycle-dot.current{width:9px; height:9px; opacity:1; box-shadow:0 0 0 2px var(--panel);}
+  .cycle-dot-menstrual{background:#FF5C8A;}
+  .cycle-dot-follicular{background:#FFC24B;}
+  .cycle-dot-ovulatory{background:#4FC3F7;}
+  .cycle-dot-luteal{background:#B39DDB;}
+  .cycle-day-badge.cycle-dot-menstrual{background:#FF5C8A;}
+  .cycle-day-badge.cycle-dot-follicular{background:#F0AC2E;}
+  .cycle-day-badge.cycle-dot-ovulatory{background:#3AAEE8;}
+  .cycle-day-badge.cycle-dot-luteal{background:#9C88D6;}
+  .cycle-card-tip{font-size:12px; line-height:1.4; color:var(--chalk);}
   .dur-chip{
     flex:1; min-width:52px; text-align:center; background:var(--panel-2); border:1px solid var(--line);
     border-radius:10px; padding:10px 0; cursor:pointer; font-family:'JetBrains Mono'; font-size:12px;
@@ -225,7 +261,7 @@
 
   /* exercise cards */
   .ex-card{
-    background:var(--panel); border:1px solid var(--line); border-radius:14px; margin-bottom:12px; overflow:hidden;
+    background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--pink); border-radius:14px; margin-bottom:12px; overflow:hidden;
     box-shadow:0 3px 14px rgba(255,45,146,0.08);
   }
   .ex-head{display:flex; justify-content:space-between; align-items:center; padding:14px 16px; cursor:pointer; gap:10px;}
@@ -476,6 +512,7 @@
     <div id="setupCard" class="card">
       <h2>Build today's session</h2>
       <div class="plan-line" id="planLine" style="display:none;"></div>
+      <div class="cycle-status" id="cyclePhaseBadge" style="display:none; margin-bottom:14px;"></div>
 
       <div class="label">Split style</div>
       <div class="chip-row" id="splitChips"></div>
@@ -658,7 +695,29 @@
     <button class="settings-close" id="importDataBtn">📥 Import backup</button>
     <input type="file" id="importFileInput" accept="application/json" style="display:none;">
     <button class="reset-btn" id="resetDataBtn">Reset all data</button>
-    <button class="settings-close" id="closeSettingsBtn">Close</button>
+
+    <div class="block-title" style="margin:20px 0 10px;"><div class="display" style="font-size:17px;">🌙 Cycle Tracker</div></div>
+    <div class="cycle-toggle-row">
+      <div class="overcrowd-check" id="cycleEnabledCheck"></div>
+      <div>
+        <div class="overcrowd-title">Enable cycle-aware suggestions</div>
+        <div class="overcrowd-sub">Stored only on this device — never leaves your phone</div>
+      </div>
+    </div>
+    <div id="cycleSettingsBody" style="display:none;">
+      <div class="settings-row">
+        <div class="settings-label">Average cycle length</div>
+        <input type="number" id="cycleLengthInput" class="cycle-input" value="28" min="18" max="45">
+      </div>
+      <div class="settings-row" id="cycleLastStartRow">
+        <div class="settings-label">Last period started</div>
+        <div class="settings-val" id="cycleLastStartVal">Not set</div>
+      </div>
+      <button class="settings-close" id="cyclePeriodTodayBtn">🩸 My period started today</button>
+      <div class="cycle-status" id="cycleStatusBox" style="display:none;"></div>
+    </div>
+
+    <button class="settings-close" id="closeSettingsBtn" style="margin-top:16px;">Close</button>
   </div>
 </div>
 
@@ -1356,6 +1415,70 @@ function seedDefaultDataIfEmpty(){
 }
 
 // ---------- STORAGE ----------
+// ---------- CYCLE TRACKER (stored locally only, never leaves the device) ----------
+function loadCycleSettings(){
+  try{
+    const v = localStorage.getItem('nsb_cycle');
+    return v ? JSON.parse(v) : {enabled:false, startDate:null, length:28};
+  }catch(e){ return {enabled:false, startDate:null, length:28}; }
+}
+function saveCycleSettings(cfg){
+  try{ localStorage.setItem('nsb_cycle', JSON.stringify(cfg)); }catch(e){}
+}
+const CYCLE_PHASES = [
+  {key:'menstrual', label:'Menstrual Phase', frac:[0, 5/28], tip:"Energy may be lower — a lighter session or extra rest is completely fine today."},
+  {key:'follicular', label:'Follicular Phase', frac:[5/28, 13/28], tip:"Energy's often climbing through this window — a good stretch for building intensity."},
+  {key:'ovulatory', label:'Ovulatory Phase', frac:[13/28, 16/28], tip:"Often the peak-energy window — a solid day to chase a new PR if you're feeling it."},
+  {key:'luteal', label:'Luteal Phase', frac:[16/28, 1], tip:"Progesterone's up — moderate, steady work often feels best, especially later in this phase."},
+];
+function getCurrentCyclePhase(cfg){
+  if(!cfg || !cfg.enabled || !cfg.startDate) return null;
+  const start = new Date(cfg.startDate+'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const daysSince = Math.floor((today - start) / 86400000);
+  const length = cfg.length || 28;
+  const cycleDay = ((daysSince % length) + length) % length + 1;
+  const posFrac = (cycleDay - 1) / length;
+  const idx = CYCLE_PHASES.findIndex(p => posFrac >= p.frac[0] && posFrac < p.frac[1]);
+  const phase = CYCLE_PHASES[idx > -1 ? idx : CYCLE_PHASES.length-1];
+  const nextPhase = CYCLE_PHASES[(Math.max(idx,0)+1) % CYCLE_PHASES.length];
+  const endDay = Math.round(phase.frac[1]*length);
+  const daysUntilNext = Math.max(1, endDay - cycleDay + 1);
+  return {...phase, cycleDay, length, nextPhase, daysUntilNext};
+}
+function cycleDotTimelineHTML(phase){
+  const length = phase.length;
+  let dots = '';
+  for(let d=1; d<=length; d++){
+    const frac = (d-1)/length;
+    const dp = CYCLE_PHASES.find(p=>frac>=p.frac[0] && frac<p.frac[1]) || CYCLE_PHASES[CYCLE_PHASES.length-1];
+    dots += `<div class="cycle-dot cycle-dot-${dp.key} ${d===phase.cycleDay?'current':''}"></div>`;
+  }
+  return `<div class="cycle-dot-row">${dots}</div>`;
+}
+function cycleCardHTML(phase){
+  return `
+    <div class="cycle-card">
+      <div class="cycle-card-top">
+        <div class="cycle-day-badge cycle-dot-${phase.key}"><div class="cycle-day-num">${phase.cycleDay}</div><div class="cycle-day-lbl">DAY</div></div>
+        <div class="cycle-card-text">
+          <div class="cycle-card-phase">${phase.label}</div>
+          <div class="cycle-card-sub">${phase.nextPhase.label} begins in ${phase.daysUntilNext} day${phase.daysUntilNext===1?'':'s'}</div>
+        </div>
+      </div>
+      ${cycleDotTimelineHTML(phase)}
+      <div class="cycle-card-tip">${phase.tip}</div>
+    </div>`;
+}
+function renderCyclePhaseBadge(){
+  const cfg = loadCycleSettings();
+  const phase = getCurrentCyclePhase(cfg);
+  const badge = document.getElementById('cyclePhaseBadge');
+  if(!phase){ badge.style.display = 'none'; return; }
+  badge.style.display = 'block';
+  badge.innerHTML = cycleCardHTML(phase);
+}
+
 async function loadHistory(){
   try{ const v = localStorage.getItem('nsb_sessions'); return v ? JSON.parse(v) : []; }catch(e){ return []; }
 }
@@ -2860,9 +2983,54 @@ document.getElementById('gearBtn').onclick = async ()=>{
   document.getElementById('statStreak').textContent = streakText;
   const totalVol = hist.reduce((sum,s)=>sum+(s.totalVolume||0),0);
   document.getElementById('statVolume').textContent = totalVol.toLocaleString()+' kg';
+  refreshCycleSettingsUI();
   settingsOverlay.classList.add('show');
 };
 document.getElementById('closeSettingsBtn').onclick = ()=>{ settingsOverlay.classList.remove('show'); };
+
+// ---------- Cycle Tracker wiring ----------
+const cycleEnabledCheck = document.getElementById('cycleEnabledCheck');
+const cycleSettingsBody = document.getElementById('cycleSettingsBody');
+const cycleLengthInput = document.getElementById('cycleLengthInput');
+const cycleLastStartVal = document.getElementById('cycleLastStartVal');
+const cycleStatusBox = document.getElementById('cycleStatusBox');
+const cycleToggleWrap = document.querySelector('.cycle-toggle-row');
+
+function refreshCycleSettingsUI(){
+  const cfg = loadCycleSettings();
+  cycleToggleWrap.classList.toggle('active', cfg.enabled);
+  cycleEnabledCheck.textContent = cfg.enabled ? '✓' : '';
+  cycleSettingsBody.style.display = cfg.enabled ? 'block' : 'none';
+  cycleLengthInput.value = cfg.length || 28;
+  cycleLastStartVal.textContent = cfg.startDate ? new Date(cfg.startDate+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : 'Not set';
+  const phase = getCurrentCyclePhase(cfg);
+  if(phase){
+    cycleStatusBox.style.display = 'block';
+    cycleStatusBox.innerHTML = cycleCardHTML(phase);
+  } else {
+    cycleStatusBox.style.display = 'none';
+  }
+  renderCyclePhaseBadge();
+}
+cycleToggleWrap.onclick = ()=>{
+  const cfg = loadCycleSettings();
+  cfg.enabled = !cfg.enabled;
+  saveCycleSettings(cfg);
+  refreshCycleSettingsUI();
+};
+cycleLengthInput.onchange = ()=>{
+  const cfg = loadCycleSettings();
+  cfg.length = Math.max(18, Math.min(45, parseInt(cycleLengthInput.value) || 28));
+  saveCycleSettings(cfg);
+  refreshCycleSettingsUI();
+};
+document.getElementById('cyclePeriodTodayBtn').onclick = ()=>{
+  const cfg = loadCycleSettings();
+  cfg.startDate = todayStr();
+  saveCycleSettings(cfg);
+  showToast('Logged 🩸');
+  refreshCycleSettingsUI();
+};
 document.getElementById('resetDataBtn').onclick = async ()=>{
   if(confirm('Reset all logged sessions and personal bests? This cannot be undone.')){
     try{
@@ -2975,6 +3143,7 @@ document.querySelectorAll('.tab').forEach(tab=>{
 (async function init(){
   seedDefaultDataIfEmpty();
   updateTimerDisplay();
+  renderCyclePhaseBadge();
   const hist = await loadHistory();
   state.historyCache = hist;
   await refreshStreak(hist);
