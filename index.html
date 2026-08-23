@@ -138,6 +138,11 @@
     width:70px; text-align:center; font-family:'JetBrains Mono'; font-size:14px; font-weight:700;
     background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:6px 4px; color:var(--chalk);
   }
+  .cycle-date-row{display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--line);}
+  .cycle-date-input{
+    font-family:'JetBrains Mono'; font-size:13px; font-weight:700; color:var(--chalk);
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:7px 10px;
+  }
   .cycle-status{margin-top:10px;}
   .cycle-card{
     background:linear-gradient(135deg, var(--pink-dim), var(--panel-2)); border:1px solid var(--pink);
@@ -714,6 +719,10 @@
         <div class="settings-val" id="cycleLastStartVal">Not set</div>
       </div>
       <button class="settings-close" id="cyclePeriodTodayBtn">🩸 My period started today</button>
+      <div class="cycle-date-row">
+        <div class="settings-label">Or pick a date</div>
+        <input type="date" id="cyclePeriodDateInput" class="cycle-date-input">
+      </div>
       <div class="cycle-status" id="cycleStatusBox" style="display:none;"></div>
     </div>
 
@@ -3003,6 +3012,7 @@ function refreshCycleSettingsUI(){
   cycleSettingsBody.style.display = cfg.enabled ? 'block' : 'none';
   cycleLengthInput.value = cfg.length || 28;
   cycleLastStartVal.textContent = cfg.startDate ? new Date(cfg.startDate+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : 'Not set';
+  cyclePeriodDateInput.value = cfg.startDate || '';
   const phase = getCurrentCyclePhase(cfg);
   if(phase){
     cycleStatusBox.style.display = 'block';
@@ -3027,6 +3037,16 @@ cycleLengthInput.onchange = ()=>{
 document.getElementById('cyclePeriodTodayBtn').onclick = ()=>{
   const cfg = loadCycleSettings();
   cfg.startDate = todayStr();
+  saveCycleSettings(cfg);
+  showToast('Logged 🩸');
+  refreshCycleSettingsUI();
+};
+const cyclePeriodDateInput = document.getElementById('cyclePeriodDateInput');
+cyclePeriodDateInput.max = todayStr();
+cyclePeriodDateInput.onchange = ()=>{
+  if(!cyclePeriodDateInput.value) return;
+  const cfg = loadCycleSettings();
+  cfg.startDate = cyclePeriodDateInput.value;
   saveCycleSettings(cfg);
   showToast('Logged 🩸');
   refreshCycleSettingsUI();
