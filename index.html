@@ -143,6 +143,10 @@
     font-family:'JetBrains Mono'; font-size:13px; font-weight:700; color:var(--chalk);
     background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:7px 10px;
   }
+  .cycle-reset-btn{
+    width:100%; background:none; border:none; color:var(--coral); font-family:'Fredoka'; font-weight:600;
+    font-size:13px; padding:10px; margin-top:6px; cursor:pointer; text-decoration:underline;
+  }
   .cycle-status{margin-top:10px;}
   .cycle-card{
     background:linear-gradient(135deg, var(--pink-dim), var(--panel-2)); border:1px solid var(--pink);
@@ -724,6 +728,7 @@
         <input type="date" id="cyclePeriodDateInput" class="cycle-date-input">
       </div>
       <div class="cycle-status" id="cycleStatusBox" style="display:none;"></div>
+      <button class="cycle-reset-btn" id="cycleResetBtn">Clear cycle data</button>
     </div>
 
     <button class="settings-close" id="closeSettingsBtn" style="margin-top:16px;">Close</button>
@@ -753,22 +758,22 @@ const MUSCLES = {
     {name:"Incline Dumbbell Press", pattern:"incline", sets:3, reps:"8-10", sub:"upper", tier:"prime"},
     {name:"Flat Dumbbell Press", pattern:"press", sets:3, reps:"8-10", sub:"flat", tier:"prime"},
     {name:"Decline Bench Press", pattern:"press", sets:3, reps:"8-10", sub:"flat", tier:"prime"},
-    {name:"Cable Fly", pattern:"fly", sets:3, reps:"12-15", sub:"flat", tier:"pump"},
-    {name:"Incline Cable Fly", pattern:"fly", sets:3, reps:"12-15", sub:"upper", tier:"pump"},
-    {name:"Pec Deck Machine", pattern:"fly", sets:3, reps:"12-15", sub:"flat", tier:"pump"},
+    {name:"Cable Fly", pattern:"fly", sets:3, reps:"12-15", sub:"flat", tier:"pump", equip:"machine"},
+    {name:"Incline Cable Fly", pattern:"fly", sets:3, reps:"12-15", sub:"upper", tier:"pump", equip:"machine"},
+    {name:"Pec Deck Machine", pattern:"fly", sets:3, reps:"12-15", sub:"flat", tier:"pump", equip:"machine"},
     {name:"Dips", pattern:"dip", sets:3, reps:"8-12", sub:"flat", tier:"prime"},
     {name:"Push-ups", pattern:"pushup", sets:3, reps:"AMRAP", sub:"flat", tier:"pump"},
-    {name:"Machine Chest Press", pattern:"press", sets:3, reps:"10-12", sub:"flat", tier:"prime"},
-    {name:"Seated Chest Press Machine", pattern:"press", sets:3, reps:"10-12", sub:"flat", tier:"prime"},
-    {name:"Assisted Dip Machine", pattern:"dip", sets:3, reps:"10-12", sub:"flat", tier:"prime"},
-    {name:"Smith Machine Bench Press", pattern:"press", sets:4, reps:"6-8", sub:"flat", tier:"main"},
+    {name:"Machine Chest Press", pattern:"press", sets:3, reps:"10-12", sub:"flat", tier:"prime", equip:"machine"},
+    {name:"Seated Chest Press Machine", pattern:"press", sets:3, reps:"10-12", sub:"flat", tier:"prime", equip:"machine"},
+    {name:"Assisted Dip Machine", pattern:"dip", sets:3, reps:"10-12", sub:"flat", tier:"prime", equip:"machine"},
+    {name:"Smith Machine Bench Press", pattern:"press", sets:4, reps:"6-8", sub:"flat", tier:"main", equip:"machine"},
     {name:"Weighted Dips", pattern:"dip", sets:4, reps:"6-8", sub:"flat", tier:"main"},
     {name:"Barbell Floor Press", pattern:"press", sets:4, reps:"6-8", sub:"flat", tier:"main"},
     {name:"Decline Dumbbell Press", pattern:"press", sets:3, reps:"8-10", sub:"flat", tier:"prime"},
     {name:"Landmine Press", pattern:"incline", sets:3, reps:"10-12", sub:"upper", tier:"prime"},
     {name:"Dumbbell Pullover", pattern:"fly", sets:3, reps:"10-12", sub:"flat", tier:"prime"},
-    {name:"Low-to-High Cable Crossover", pattern:"fly", sets:3, reps:"12-15", sub:"upper", tier:"pump"},
-    {name:"High-to-Low Cable Crossover", pattern:"fly", sets:3, reps:"12-15", sub:"flat", tier:"pump"},
+    {name:"Low-to-High Cable Crossover", pattern:"fly", sets:3, reps:"12-15", sub:"upper", tier:"pump", equip:"machine"},
+    {name:"High-to-Low Cable Crossover", pattern:"fly", sets:3, reps:"12-15", sub:"flat", tier:"pump", equip:"machine"},
     {name:"Decline Push-ups", pattern:"pushup", sets:3, reps:"AMRAP", sub:"upper", tier:"pump"},
     {name:"Svend Press", pattern:"press", sets:3, reps:"15-20", sub:"flat", tier:"pump"},
     {name:"Isometric Bench Press Hold", pattern:"press", sets:3, reps:"15-20s hold", sub:"flat", tier:"pump", isometric:true},
@@ -785,21 +790,21 @@ const MUSCLES = {
     {name:"Weighted Pull-ups", pattern:"pullup", sets:4, reps:"5-6", sub:"width", tier:"main"},
     {name:"Snatch-Grip Deadlift", pattern:"hinge", sets:3, reps:"5-6", sub:"thickness", tier:"main"},
     {name:"Barbell Good Morning", pattern:"hinge", sets:3, reps:"8-10", sub:"thickness", tier:"main"},
-    {name:"Lat Pulldown", pattern:"pull", sets:3, reps:"10-12", sub:"width", tier:"prime"},
-    {name:"Wide-Grip Lat Pulldown", pattern:"pull", sets:3, reps:"10-12", sub:"width", tier:"prime"},
-    {name:"Neutral-Grip Pulldown", pattern:"pull", sets:3, reps:"10-12", sub:"width", tier:"prime"},
+    {name:"Lat Pulldown", pattern:"pull", sets:3, reps:"10-12", sub:"width", tier:"prime", equip:"machine"},
+    {name:"Wide-Grip Lat Pulldown", pattern:"pull", sets:3, reps:"10-12", sub:"width", tier:"prime", equip:"machine"},
+    {name:"Neutral-Grip Pulldown", pattern:"pull", sets:3, reps:"10-12", sub:"width", tier:"prime", equip:"machine"},
     {name:"Standing T-Bar Row", pattern:"pull", sets:4, reps:"8-10", sub:"thickness", tier:"main"},
     {name:"Back Hyperextension", pattern:"hinge", sets:3, reps:"12-15", sub:"thickness", tier:"prime"},
-    {name:"Assisted Pull-up Machine", pattern:"pullup", sets:3, reps:"10-12", sub:"width", tier:"prime"},
+    {name:"Assisted Pull-up Machine", pattern:"pullup", sets:3, reps:"10-12", sub:"width", tier:"prime", equip:"machine"},
     {name:"T-Bar Row", pattern:"pull", sets:3, reps:"8-10", sub:"thickness", tier:"prime"},
-    {name:"Seated Cable Row", pattern:"pull", sets:3, reps:"10-12", sub:"thickness", tier:"prime"},
-    {name:"Chest-Supported Row", pattern:"pull", sets:3, reps:"10-12", sub:"thickness", tier:"prime"},
+    {name:"Seated Cable Row", pattern:"pull", sets:3, reps:"10-12", sub:"thickness", tier:"prime", equip:"machine"},
+    {name:"Chest-Supported Row", pattern:"pull", sets:3, reps:"10-12", sub:"thickness", tier:"prime", equip:"machine"},
     {name:"Meadows Row", pattern:"pull", sets:3, reps:"10/side", sub:"thickness", tier:"prime"},
     {name:"Kroc Row", pattern:"pull", sets:3, reps:"12-15/side", sub:"thickness", tier:"prime"},
     {name:"Single-Arm Dumbbell Row", pattern:"pull", sets:3, reps:"10/side", sub:"thickness", tier:"prime"},
     {name:"Arm-Bent Pullover", pattern:"pull", sets:3, reps:"12-15", sub:"width", tier:"prime"},
-    {name:"Straight-Arm Pulldown", pattern:"pull", sets:3, reps:"12-15", sub:"width", tier:"pump"},
-    {name:"Cable Pullover", pattern:"pull", sets:3, reps:"12-15", sub:"width", tier:"pump"},
+    {name:"Straight-Arm Pulldown", pattern:"pull", sets:3, reps:"12-15", sub:"width", tier:"pump", equip:"machine"},
+    {name:"Cable Pullover", pattern:"pull", sets:3, reps:"12-15", sub:"width", tier:"pump", equip:"machine"},
     {name:"Inverted Row", pattern:"pull", sets:3, reps:"12-15", sub:"thickness", tier:"pump"},
     {name:"Face Pull", pattern:"facepull", sets:3, reps:"12-15", sub:"thickness", tier:"pump"},
     {name:"Isometric Row Hold", pattern:"pull", sets:3, reps:"20-30s hold", sub:"thickness", tier:"pump", isometric:true},
@@ -813,7 +818,7 @@ const MUSCLES = {
     {name:"Push Press", pattern:"overhead", sets:4, reps:"5-6", sub:"front", tier:"main"},
     {name:"DB Push Press", pattern:"overhead", sets:4, reps:"5-6", sub:"front", tier:"main"},
     {name:"Seated Barbell Press", pattern:"overhead", sets:4, reps:"6-8", sub:"front", tier:"main"},
-    {name:"Shoulder Press Machine", pattern:"overhead", sets:3, reps:"10-12", sub:"front", tier:"prime"},
+    {name:"Shoulder Press Machine", pattern:"overhead", sets:3, reps:"10-12", sub:"front", tier:"prime", equip:"machine"},
     {name:"Clean and Press", pattern:"overhead", sets:4, reps:"5-6", sub:"front", tier:"main"},
     {name:"Behind-the-Neck Press", pattern:"overhead", sets:3, reps:"6-8", sub:"front", tier:"main"},
     {name:"Dumbbell Shoulder Press", pattern:"overhead", sets:3, reps:"8-10", sub:"front", tier:"prime"},
@@ -824,12 +829,12 @@ const MUSCLES = {
     {name:"Cuban Press", pattern:"raise", sets:3, reps:"10-12", sub:"rear", tier:"prime"},
     {name:"Front Raise", pattern:"raise", sets:3, reps:"12-15", sub:"front", tier:"pump"},
     {name:"Plate Front Raise", pattern:"raise", sets:3, reps:"12-15", sub:"front", tier:"pump"},
-    {name:"Cable Front Raise", pattern:"raise", sets:3, reps:"12-15", sub:"front", tier:"pump"},
-    {name:"Cable Lateral Raise", pattern:"raise", sets:3, reps:"12-15", sub:"front", tier:"pump"},
+    {name:"Cable Front Raise", pattern:"raise", sets:3, reps:"12-15", sub:"front", tier:"pump", equip:"machine"},
+    {name:"Cable Lateral Raise", pattern:"raise", sets:3, reps:"12-15", sub:"front", tier:"pump", equip:"machine"},
     {name:"Rear Delt Fly", pattern:"fly", sets:3, reps:"12-15", sub:"rear", tier:"pump"},
     {name:"Bent-Over Rear Delt Raise", pattern:"fly", sets:3, reps:"12-15", sub:"rear", tier:"pump"},
-    {name:"Reverse Pec Deck", pattern:"fly", sets:3, reps:"12-15", sub:"rear", tier:"pump"},
-    {name:"Cable Y-Raise", pattern:"raise", sets:3, reps:"12-15", sub:"rear", tier:"pump"},
+    {name:"Reverse Pec Deck", pattern:"fly", sets:3, reps:"12-15", sub:"rear", tier:"pump", equip:"machine"},
+    {name:"Cable Y-Raise", pattern:"raise", sets:3, reps:"12-15", sub:"rear", tier:"pump", equip:"machine"},
     {name:"Shrugs", pattern:"shrug", sets:3, reps:"12-15", sub:"rear", tier:"pump"},
     {name:"Overhead Hold", pattern:"overhead", sets:3, reps:"20-30s hold", sub:"front", tier:"pump", isometric:true},
     {name:"Waiter's Hold", pattern:"overhead", sets:3, reps:"20-30s/side hold", sub:"front", tier:"pump", isometric:true},
@@ -841,7 +846,7 @@ const MUSCLES = {
     {name:"Barbell Squat", pattern:"squat", sets:4, reps:"6-8", sub:"quad", tier:"main"},
     {name:"Sumo Squat", pattern:"squat", sets:4, reps:"8-10", sub:"quad", tier:"main"},
     {name:"Front Squat", pattern:"squat", sets:3, reps:"6-8", sub:"quad", tier:"main"},
-    {name:"Hack Squat", pattern:"squat", sets:3, reps:"8-10", sub:"quad", tier:"main"},
+    {name:"Hack Squat", pattern:"squat", sets:3, reps:"8-10", sub:"quad", tier:"main", equip:"machine"},
     {name:"Romanian Deadlift", pattern:"hinge", sets:3, reps:"8-10", sub:"posterior", tier:"main"},
     {name:"Stiff-Leg Deadlift", pattern:"hinge", sets:3, reps:"8-10", sub:"posterior", tier:"main"},
     {name:"Sumo Deadlift", pattern:"hinge", sets:3, reps:"5-6", sub:"posterior", tier:"main"},
@@ -853,22 +858,22 @@ const MUSCLES = {
     {name:"Deficit Deadlift", pattern:"hinge", sets:3, reps:"5-6", sub:"posterior", tier:"main"},
     {name:"Power Clean", pattern:"hinge", sets:4, reps:"3-5", sub:"quad", tier:"main"},
     {name:"Goblet Squat", pattern:"squat", sets:3, reps:"10-12", sub:"quad", tier:"prime"},
-    {name:"Leg Press", pattern:"legpress", sets:3, reps:"10-12", sub:"quad", tier:"prime"},
+    {name:"Leg Press", pattern:"legpress", sets:3, reps:"10-12", sub:"quad", tier:"prime", equip:"machine"},
     {name:"Walking Lunge", pattern:"lunge", sets:3, reps:"10/leg", sub:"quad", tier:"prime"},
     {name:"Step-Up", pattern:"lunge", sets:3, reps:"10/leg", sub:"quad", tier:"prime"},
     {name:"Bulgarian Split Squat", pattern:"lunge", sets:3, reps:"10/leg", sub:"posterior", tier:"prime"},
-    {name:"Leg Curl", pattern:"legcurl", sets:3, reps:"10-12", sub:"posterior", tier:"prime"},
+    {name:"Leg Curl", pattern:"legcurl", sets:3, reps:"10-12", sub:"posterior", tier:"prime", equip:"machine"},
     {name:"Nordic Hamstring Curl", pattern:"legcurl", sets:3, reps:"6-8", sub:"posterior", tier:"prime"},
-    {name:"Leg Extension", pattern:"legext", sets:3, reps:"12-15", sub:"quad", tier:"pump"},
-    {name:"Seated Leg Curl", pattern:"legcurl", sets:3, reps:"12-15", sub:"posterior", tier:"pump"},
+    {name:"Leg Extension", pattern:"legext", sets:3, reps:"12-15", sub:"quad", tier:"pump", equip:"machine"},
+    {name:"Seated Leg Curl", pattern:"legcurl", sets:3, reps:"12-15", sub:"posterior", tier:"pump", equip:"machine"},
     {name:"Curtsy Lunge", pattern:"lunge", sets:3, reps:"12/leg", sub:"posterior", tier:"pump"},
-    {name:"Cable Kickback", pattern:"hipthrust", sets:3, reps:"15/leg", sub:"posterior", tier:"pump"},
+    {name:"Cable Kickback", pattern:"hipthrust", sets:3, reps:"15/leg", sub:"posterior", tier:"pump", equip:"machine"},
     {name:"Glute Bridge", pattern:"hipthrust", sets:3, reps:"12-15", sub:"posterior", tier:"pump"},
     {name:"Calf Raise", pattern:"calf", sets:4, reps:"15-20", tier:"pump"},
-    {name:"Seated Calf Raise", pattern:"calf", sets:4, reps:"15-20", tier:"pump"},
-    {name:"Standing Calf Raise Machine", pattern:"calf", sets:4, reps:"15-20", tier:"pump"},
-    {name:"Inner Thigh Machine (Adductor)", pattern:"legext", sets:3, reps:"12-15", sub:"quad", tier:"prime"},
-    {name:"Outer Thigh Machine (Abductor)", pattern:"legcurl", sets:3, reps:"12-15", sub:"posterior", tier:"prime"},
+    {name:"Seated Calf Raise", pattern:"calf", sets:4, reps:"15-20", tier:"pump", equip:"machine"},
+    {name:"Standing Calf Raise Machine", pattern:"calf", sets:4, reps:"15-20", tier:"pump", equip:"machine"},
+    {name:"Inner Thigh Machine (Adductor)", pattern:"legext", sets:3, reps:"12-15", sub:"quad", tier:"prime", equip:"machine"},
+    {name:"Outer Thigh Machine (Abductor)", pattern:"legcurl", sets:3, reps:"12-15", sub:"posterior", tier:"prime", equip:"machine"},
     {name:"Wall Sit", pattern:"squat", sets:3, reps:"30-45s hold", sub:"quad", tier:"pump", isometric:true},
     {name:"Sumo Squat Hold", pattern:"squat", sets:3, reps:"30-45s hold", sub:"quad", tier:"pump", isometric:true},
     {name:"Static Lunge Hold", pattern:"lunge", sets:3, reps:"20-30s/side hold", sub:"posterior", tier:"pump", isometric:true},
@@ -887,18 +892,18 @@ const MUSCLES = {
     {name:"Weighted Chin-ups", pattern:"pullup", sets:3, reps:"6-8", sub:"biceps", tier:"main"},
     {name:"Hammer Curl", pattern:"curl", sets:3, reps:"10-12", sub:"biceps", tier:"prime"},
     {name:"Incline Dumbbell Curl", pattern:"curl", sets:3, reps:"10-12", sub:"biceps", tier:"prime"},
-    {name:"Cable Curl", pattern:"curl", sets:3, reps:"10-12", sub:"biceps", tier:"prime"},
+    {name:"Cable Curl", pattern:"curl", sets:3, reps:"10-12", sub:"biceps", tier:"prime", equip:"machine"},
     {name:"Zottman Curl", pattern:"curl", sets:3, reps:"10-12", sub:"biceps", tier:"prime"},
     {name:"Skull Crushers", pattern:"triceps", sets:3, reps:"10-12", sub:"triceps", tier:"prime"},
     {name:"Bench Dips", pattern:"dip", sets:3, reps:"12-15", sub:"triceps", tier:"prime"},
     {name:"Diamond Push-ups", pattern:"pushup", sets:3, reps:"12-15", sub:"triceps", tier:"prime"},
-    {name:"Tricep Rope Pushdown", pattern:"triceps", sets:3, reps:"12-15", sub:"triceps", tier:"pump"},
+    {name:"Tricep Rope Pushdown", pattern:"triceps", sets:3, reps:"12-15", sub:"triceps", tier:"pump", equip:"machine"},
     {name:"Preacher Curl", pattern:"curl", sets:3, reps:"10-12", sub:"biceps", tier:"pump"},
     {name:"Spider Curl", pattern:"curl", sets:3, reps:"12-15", sub:"biceps", tier:"pump"},
     {name:"Overhead Tricep Extension", pattern:"triceps", sets:3, reps:"10-12", sub:"triceps", tier:"pump"},
     {name:"Single-Arm Tricep Kickback", pattern:"triceps", sets:3, reps:"12-15/side", sub:"triceps", tier:"pump"},
     {name:"Isometric Bicep Hold", pattern:"curl", sets:3, reps:"20s hold", sub:"biceps", tier:"pump", isometric:true},
-    {name:"Tricep Extension Machine", pattern:"triceps", sets:3, reps:"12-15", sub:"triceps", tier:"pump"},
+    {name:"Tricep Extension Machine", pattern:"triceps", sets:3, reps:"12-15", sub:"triceps", tier:"pump", equip:"machine"},
     {name:"Isometric Tricep Hold", pattern:"triceps", sets:3, reps:"20s hold", sub:"triceps", tier:"pump", isometric:true},
     {name:"Dip Bottom Hold", pattern:"dip", sets:3, reps:"15-20s hold", sub:"triceps", tier:"prime", isometric:true},
     {name:"Chin-Up Bottom Hold", pattern:"pullup", sets:3, reps:"15-20s hold", sub:"biceps", tier:"prime", isometric:true},
@@ -907,19 +912,19 @@ const MUSCLES = {
     {name:"Turkish Get-Up", pattern:"core", sets:3, reps:"5/side", tier:"main"},
     {name:"Dragon Flag", pattern:"core", sets:3, reps:"6-8", tier:"prime"},
     {name:"Landmine 180", pattern:"twist", sets:3, reps:"10/side", tier:"prime"},
-    {name:"Rotary Torso Machine", pattern:"twist", sets:3, reps:"12-15/side", tier:"pump"},
-    {name:"Crunch Machine", pattern:"crunch", sets:3, reps:"15-20", tier:"pump"},
+    {name:"Rotary Torso Machine", pattern:"twist", sets:3, reps:"12-15/side", tier:"pump", equip:"machine"},
+    {name:"Crunch Machine", pattern:"crunch", sets:3, reps:"15-20", tier:"pump", equip:"machine"},
     {name:"Toes to Bar", pattern:"legraise", sets:3, reps:"8-12", tier:"prime"},
     {name:"Hanging Leg Raise", pattern:"legraise", sets:3, reps:"10-15", tier:"prime"},
     {name:"Weighted Sit-up", pattern:"crunch", sets:3, reps:"10-12", tier:"prime"},
     {name:"Ab Wheel Rollout", pattern:"core", sets:3, reps:"8-10", tier:"prime"},
-    {name:"Cable Crunch", pattern:"crunch", sets:3, reps:"12-15", tier:"pump"},
+    {name:"Cable Crunch", pattern:"crunch", sets:3, reps:"12-15", tier:"pump", equip:"machine"},
     {name:"Plank", pattern:"core", sets:3, reps:"45s", tier:"pump", isometric:true},
     {name:"Side Plank", pattern:"core", sets:3, reps:"30s/side", tier:"pump", isometric:true},
     {name:"Hollow Body Hold", pattern:"core", sets:3, reps:"30s", tier:"pump", isometric:true},
     {name:"Dead Bug", pattern:"core", sets:3, reps:"12/side", tier:"pump"},
     {name:"Russian Twist", pattern:"twist", sets:3, reps:"20", tier:"pump"},
-    {name:"Pallof Press", pattern:"twist", sets:3, reps:"12/side", tier:"pump"},
+    {name:"Pallof Press", pattern:"twist", sets:3, reps:"12/side", tier:"pump", equip:"machine"},
     {name:"Bicycle Crunch", pattern:"crunch", sets:3, reps:"20", tier:"pump"},
     {name:"V-Ups", pattern:"crunch", sets:3, reps:"15", tier:"pump"},
     {name:"Mountain Climbers", pattern:"core", sets:3, reps:"30s", tier:"pump"},
@@ -1260,8 +1265,8 @@ const DAY_FOCUS = {
     {label:"Pull Focus (Back/Biceps)", musclesOverride:['back','arms'], subMap:{arms:'biceps'}},
   ],
   full:[
-    {label:"Quad & Push Emphasis", subMap:{legs:'quad'}},
-    {label:"Posterior & Pull Emphasis", subMap:{legs:'posterior'}},
+    {label:"Quad & Push Emphasis", subMap:{legs:'quad', chest:'flat', shoulders:'front'}, priorityMuscle:'chest'},
+    {label:"Posterior & Pull Emphasis", subMap:{legs:'posterior', back:'thickness'}, priorityMuscle:'back'},
   ],
 };
 
@@ -1874,19 +1879,23 @@ function tierPool(muscles, focus, tier, applySubFilter, exclude){
 }
 const COMPOUND_PATTERNS = new Set(['press','incline','dip','pushup','overhead','pull','pullup','squat','hinge','lunge','legpress','hipthrust']);
 function isCompoundPattern(pattern){ return COMPOUND_PATTERNS.has(pattern); }
+function isOvercrowdFriendly(ex){ return isCompoundPattern(ex.pattern) && ex.equip !== 'machine'; }
 
 function pickFromTier(muscles, focus, tier, count, exclude, preferCompound, rotateOffset){
   rotateOffset = rotateOffset || 0;
   const orderedMuscles = muscles.length ? [...muscles.slice(rotateOffset % muscles.length), ...muscles.slice(0, rotateOffset % muscles.length)] : muscles;
   const perMuscle = {};
   orderedMuscles.forEach(m=>{
-    let mPool = tierPool([m], focus, tier, true, exclude);
+    const strictPool = tierPool([m], focus, tier, true, exclude);
     if(preferCompound){
-      mPool = [...shuffledArr(mPool.filter(e=>isCompoundPattern(e.pattern))), ...shuffledArr(mPool.filter(e=>!isCompoundPattern(e.pattern)))];
+      const relaxedPool = tierPool([m], focus, tier, false, exclude);
+      const strictFriendly = shuffledArr(strictPool.filter(e=>isOvercrowdFriendly(e)));
+      const relaxedFriendlyExtra = shuffledArr(relaxedPool.filter(e=>isOvercrowdFriendly(e) && !strictFriendly.some(s=>s.name===e.name)));
+      const rest = shuffledArr(relaxedPool.filter(e=>!isOvercrowdFriendly(e)));
+      perMuscle[m] = [...strictFriendly, ...relaxedFriendlyExtra, ...rest];
     } else {
-      mPool = shuffledArr(mPool);
+      perMuscle[m] = shuffledArr(strictPool);
     }
-    perMuscle[m] = mPool;
   });
   let picked = [];
   let round = 0;
@@ -1903,8 +1912,13 @@ function pickFromTier(muscles, focus, tier, count, exclude, preferCompound, rota
     round++;
   }
   if(picked.length < count){
-    const relaxed = shuffledArr(tierPool(muscles, focus, tier, false, exclude)).filter(e=>!picked.some(p=>p.name===e.name));
-    picked = picked.concat(relaxed).slice(0, count);
+    let relaxedPool = tierPool(muscles, focus, tier, false, exclude).filter(e=>!picked.some(p=>p.name===e.name));
+    if(preferCompound){
+      relaxedPool = [...shuffledArr(relaxedPool.filter(e=>e.equip!=='machine')), ...shuffledArr(relaxedPool.filter(e=>e.equip==='machine'))];
+    } else {
+      relaxedPool = shuffledArr(relaxedPool);
+    }
+    picked = picked.concat(relaxedPool).slice(0, count);
   }
   return picked;
 }
@@ -1914,7 +1928,12 @@ function pickTieredExercises(day, counts, duration){
   const exclude = new Set();
   let primary = [];
   if(focus && focus.priorityMuscle){
-    const priPool = shuffledArr(tierPool([focus.priorityMuscle], focus, 'main', true, exclude));
+    let priPool = tierPool([focus.priorityMuscle], focus, 'main', true, exclude);
+    if(preferCompound){
+      priPool = [...shuffledArr(priPool.filter(e=>isOvercrowdFriendly(e))), ...shuffledArr(priPool.filter(e=>!isOvercrowdFriendly(e)))];
+    } else {
+      priPool = shuffledArr(priPool);
+    }
     if(priPool.length){ primary.push(priPool[0]); exclude.add(priPool[0].name); }
   }
   primary = primary.concat(pickFromTier(muscles, focus, 'main', counts.primary - primary.length, exclude, preferCompound, 0));
@@ -3050,6 +3069,13 @@ cyclePeriodDateInput.onchange = ()=>{
   saveCycleSettings(cfg);
   showToast('Logged 🩸');
   refreshCycleSettingsUI();
+};
+document.getElementById('cycleResetBtn').onclick = ()=>{
+  if(confirm('Clear your cycle length and start date? Your workout history stays untouched.')){
+    try{ localStorage.removeItem('nsb_cycle'); }catch(e){}
+    showToast('Cycle data cleared');
+    refreshCycleSettingsUI();
+  }
 };
 document.getElementById('resetDataBtn').onclick = async ()=>{
   if(confirm('Reset all logged sessions and personal bests? This cannot be undone.')){
