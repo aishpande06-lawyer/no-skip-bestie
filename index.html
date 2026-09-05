@@ -946,6 +946,9 @@ const WARMUP_GENERAL = {
     {name:"Jump Rope", pattern:"jumprope", duration:"2 rounds x 30s"},
     {name:"Butt Kicks", pattern:"cardio", duration:"2 rounds x 30s"},
     {name:"Star Jumps", pattern:"cardio", duration:"2 rounds x 20 reps"},
+    {name:"Standing Marches", pattern:"cardio", duration:"2 rounds x 30s"},
+    {name:"Toy Soldiers", pattern:"cardio", duration:"2 rounds x 12 reps"},
+    {name:"Standing Knee Hugs", pattern:"cardio", duration:"2 rounds x 10/side"},
   ],
   core:[
     {name:"Mountain Climbers", pattern:"core", duration:"2 rounds x 30s"},
@@ -1286,6 +1289,7 @@ const LIGHT_ACTIVITIES = [
 ];
 
 const DUR_CONFIG = {
+  20:{warmup:4, primary:1, prime:1, pump:1, cardio:0, cooldown:1},
   30:{warmup:4, primary:1, prime:2, pump:1, cardio:0, cooldown:1},
   45:{warmup:4, primary:1, prime:2, pump:2, cardio:1, cooldown:2},
   50:{warmup:4, primary:2, prime:2, pump:2, cardio:1, cooldown:2},
@@ -1302,7 +1306,7 @@ const ROUND_FORMATS = {
   emom:{label:"EMOM", hint:"A new interval starts every 60s — the app auto-advances through the exercises for you."},
   interval:{label:"Interval", hint:"Timed ON/OFF work blocks — pick a scheme and rounds, the timer cycles through automatically."},
 };
-const ROUND_MINUTES = {30:10, 45:12, 50:14, 60:16, 75:18, 90:20};
+const ROUND_MINUTES = {20:8, 30:10, 45:12, 50:14, 60:16, 75:18, 90:20};
 
 const INTERVAL_SCHEMES = {
   '40-20':{on:40, off:20, label:'40s ON / 20s OFF'},
@@ -1383,11 +1387,11 @@ const ROUND_EXERCISES = {
     {name:"Renegade Row to Push-up", pattern:"pull", reps:"8/side", combo:true, muscle:"back"},
     {name:"DB Squat to Press", pattern:"squat", reps:"10", combo:true, muscle:"legs"},
     {name:"DB Lunge to Overhead Press", pattern:"lunge", reps:"8/leg", combo:true, muscle:"legs"},
-    {name:"DB Clean and Press", pattern:"hinge", reps:"8", combo:true, muscle:"back"},
-    {name:"DB Snatch", pattern:"hinge", reps:"8/side", combo:true, muscle:"back"},
-    {name:"DB Clean", pattern:"hinge", reps:"8", combo:true, muscle:"back"},
-    {name:"Farmer's Carry", pattern:"hinge", reps:"30s", combo:true, muscle:"back"},
-    {name:"Suitcase Carry", pattern:"hinge", reps:"30s/side", combo:true, muscle:"back"},
+    {name:"DB Clean and Press", pattern:"hinge", reps:"8", combo:true, muscle:"shoulders"},
+    {name:"DB Snatch", pattern:"hinge", reps:"8/side", combo:true, muscle:"shoulders"},
+    {name:"DB Clean", pattern:"hinge", reps:"8", combo:true, muscle:"shoulders"},
+    {name:"Farmer's Carry", pattern:"hinge", reps:"30s", combo:true, muscle:"back", exGroup:"carry"},
+    {name:"Suitcase Carry", pattern:"hinge", reps:"30s/side", combo:true, muscle:"back", exGroup:"carry"},
     {name:"DB Turkish Get-Up", pattern:"core", reps:"5/side", combo:true, muscle:"shoulders"},
     {name:"DB Chest Squeeze Hold", pattern:"press", reps:"15-20s hold", muscle:"chest", sub:"flat", isometric:true},
     {name:"DB Row Hold", pattern:"pull", reps:"15-20s hold", muscle:"back", sub:"thickness", isometric:true},
@@ -1990,8 +1994,7 @@ function pickTieredExercises(day, counts, duration){
         return false;
       };
       if(!(pump.length && trySafeReplace(pump)) && !(prime.length && trySafeReplace(prime)) && !(primary.length && trySafeReplace(primary))){
-        // no slot was safe to swap (every muscle is a sole representative) — append rather than risk undoing coverage
-        pump = [...pump, chosen];
+        // no slot was safe to swap — skip the isometric add rather than growing the session beyond its intended length
       }
     }
   }
@@ -2015,20 +2018,44 @@ function pickRoundExercises(day, equipment, count, duration, excludeNames){
     if(applySubFilter && focus && focus.subMap && focus.subMap[ex.muscle] && ex.sub && ex.sub !== focus.subMap[ex.muscle]) return false;
     return true;
   }
+  // prefer picks that don't repeat a movement pattern already in the session, so a circuit doesn't
+  // stack multiple similar hinge/carry-style moves back to back — falls back to repeats only if needed
+  function pickDiverse(candidates, need, already){
+    if(need <= 0) return [];
+    const usedPatterns = new Set(already.map(e=>e.pattern));
+    const usedGroups = new Set(already.filter(e=>e.exGroup).map(e=>e.exGroup));
+    const usedNames = new Set(already.map(e=>e.name));
+    const result = [];
+    for(const c of candidates){
+      if(result.length >= need) break;
+      if(usedNames.has(c.name) || usedPatterns.has(c.pattern) || (c.exGroup && usedGroups.has(c.exGroup))) continue;
+      result.push(c); usedPatterns.add(c.pattern); usedNames.add(c.name);
+      if(c.exGroup) usedGroups.add(c.exGroup);
+    }
+    for(const c of candidates){
+      if(result.length >= need) break;
+      if(usedNames.has(c.name) || (c.exGroup && usedGroups.has(c.exGroup))) continue;
+      result.push(c); usedNames.add(c.name);
+      if(c.exGroup) usedGroups.add(c.exGroup);
+    }
+    return result;
+  }
 
   let picked = [];
   // for shorter sessions, prioritize efficient combo/compound movements to get the most out of limited time
   if((duration && duration < 45) || state.overcrowdMode){
     const comboMatches = shuffled(pool.filter(e=>e.combo && matches(e, true)));
-    picked = comboMatches.slice(0, Math.min(count, Math.ceil(count/2)+1));
+    const distinctPatterns = new Set(comboMatches.map(e=>e.pattern)).size;
+    const comboTarget = Math.min(count, Math.ceil(count/2)+1, distinctPatterns);
+    picked = picked.concat(pickDiverse(comboMatches, comboTarget - picked.length, picked));
   }
   if(picked.length < count){
-    const rest = shuffled(pool.filter(e=>matches(e, true) && !picked.some(p=>p.name===e.name)));
-    picked = picked.concat(rest).slice(0, count);
+    const rest = shuffled(pool.filter(e=>matches(e, true)));
+    picked = picked.concat(pickDiverse(rest, count - picked.length, picked));
   }
   if(picked.length < count){
-    const relaxed = shuffled(pool.filter(e=>matches(e, false) && !picked.some(p=>p.name===e.name)));
-    picked = picked.concat(relaxed).slice(0, count);
+    const relaxed = shuffled(pool.filter(e=>matches(e, false)));
+    picked = picked.concat(pickDiverse(relaxed, count - picked.length, picked));
   }
   if(picked.length < count){
     const anyLeft = shuffled(pool.filter(e=>!picked.some(p=>p.name===e.name)));
